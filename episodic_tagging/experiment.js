@@ -6,27 +6,6 @@ function getDisplayElement() {
   return $('<div class = display_stage></div>').appendTo('body')
 }
 
-function evalAttentionChecks() {
-  var check_percent = 1
-  if (run_attention_checks) {
-    var attention_check_trials = jsPsych.data.getTrialsOfType('attention-check')
-    var checks_passed = 0
-    for (var i = 0; i < attention_check_trials.length; i++) {
-      if (attention_check_trials[i].correct === true) {
-        checks_passed += 1
-      }
-    }
-    check_percent = checks_passed / attention_check_trials.length
-  }
-  return check_percent
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'kirby'
-  })
-}
-
 var getInstructFeedback = function() {
   return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
     '</p></div>'
@@ -35,11 +14,6 @@ var getInstructFeedback = function() {
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
-// generic task variables
-var run_attention_checks = false
-var attention_check_thresh = 0.45
-var sumInstructTime = 0 //ms
-var instructTimeThresh = 0 ///in seconds
 
 // task specific variables
 //hard coded options in the amounts and order specified in Kirby and Marakovic (1996)
@@ -89,39 +63,11 @@ for (var i = 0; i < stim_html.length; i++) {
 /* ************************************ */
 /* Set up jsPsych blocks */
 /* ************************************ */
-// Set up attention check node
-var attention_check_block = {
-  type: 'attention-check',
-  data: {
-    trial_id: "attention_check"
-  },
-  timing_response: 180000,
-  response_ends_trial: true,
-  timing_post_trial: 200
-}
 
-var attention_node = {
-  timeline: [attention_check_block],
-  conditional_function: function() {
-    return run_attention_checks
-  }
-}
+// Welcome block
 
-//Set up post task questionnaire
-var post_task_block = {
-   type: 'survey-text',
-   data: {
-       trial_id: "post task questions"
-   },
-   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
-              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
-   rows: [15, 15],
-   columns: [60,60]
-};
-
-/* define static blocks */
 var feedback_instruct_text =
-  'Welcome to the experiment. This experiment will take about 5 minutes. Press <strong>enter</strong> to begin.'
+  'Welcome to the experiment. This experiment will take about 30 minutes. Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
   type: 'poldrack-text',
   cont_key: [13],
@@ -132,6 +78,9 @@ var feedback_instruct_block = {
   timing_post_trial: 0,
   timing_response: 180000
 };
+
+// Instructions block
+
 /// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
 var instructions_block = {
   type: 'poldrack-instructions',
@@ -139,7 +88,8 @@ var instructions_block = {
     trial_id: "instruction"
   },
   pages: [
-    '<div class = centerbox><p class = block-text>In this experiment you will be presented with two amounts of money to choose between. One of the amounts will be available now and the other will be available in the future. Your job is to indicate which option you would prefer by pressing <strong>"q"</strong> for the left option and <strong>"p"</strong> for the right option.</p><p class = block-text>You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
+    '<div class = centerbox><p class = block-text>In this experiment you will be presented with two amounts of money to choose between. One of the options will be $20 available now. The other will be a variable amount available in the future. Your job is to indicate whether you prefer $20 now or the presented amount in the future.</p></div>',
+    '<div class = centerbox><p class = block-text>You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
   ],
   allow_keys: false,
   show_clickable_nav: true
@@ -166,6 +116,86 @@ var instruction_node = {
     }
   }
 }
+
+// Practice block
+
+// Calibration block
+// In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
+// of money (delays [days]: 1, 2, 7, 14, 30, 90, 180). The hypothetical rewards always amounted to at least 20.5€, 
+// but without an upper limit. An adjusting-amount procedure was used such that, following two successive choices of 
+// the delayed reward, the delayed amount was reduced, and following two successive choices of the immediate reward, 
+// the delayed amount was increased in a step-wise manner. The algorithm terminated as soon as the difference between 
+// accepted and rejected delayed amounts reached a delay-specific criterion [Criterion in €: 1.0 (1d), 1.5 (2d), 
+// 2.0 (7d), 2.0 (14d), 3.0 (30d), 4.0 (90d), 4.0 (180d)]
+
+// fixation block - stim block - response block - jitter block --> calibration node
+// green_circle.png red_circle.png red_x.png green_check.png
+
+// Indifference point calculation
+
+// Check behavioral exclusion criteria
+
+// Test block stimulus generation
+
+// Peters & Büchel 2009:
+// Based on the behavioral pretests, individual offers were
+// computed for each participant to ensure that participants chose the de-
+// layed/probabilistic offer in ?50% of trials. More specifically, the maxi-
+// mumamount of the delayed/probabilistic option was set to €80, and the
+// minimumamount was set to €20.5
+// From this range of magnitudes, trials
+// were constructed by selecting an equal, uniformly distributed number of
+// offers with an estimated subjective value below and above the indiffer-
+// ence point (based on the pretest data). In cases in which the indifference
+// point was larger than €50, an equal number of trials with a subjective
+// value below and above €50 were created
+// Participants were instructed that the fixed, immediately available re-
+// ward would not be displayed, and they would only be shown the alterna-
+// tive delayed or probabilistic offer.Agreen dot was shown for 500ms(Fig.
+// 1), signaling the start of the trial. Then, the delayed or probabilistic offer
+// was shown for 2500 ms, followed by a red dot (jitter) that was shown for
+// random duration between 3 and 7 s, drawn from a uniform distribution.
+// Then, a red “X” and a green check mark were shown (randomly assigned
+// to either side of the screen). Participants pressed the red X to choose the
+// fixed reward of €20 and the check mark to choose the delayed/probabi-
+// listic offer. After response feedback, another 3–7 s jitter preceded the start
+// of the next trial.
+
+// Tag generation
+
+// Test instruction block
+
+// Test block
+
+// Thank you block
+
+// Random reward selection block
+
+// Debriefing block
+var end_block = {
+  type: 'poldrack-text',
+  data: {
+    trial_id: "end_block"
+  },
+  timing_response: 180000,
+  text: '<div class = centerbox><p class = center-block-text>Thank you for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
+  cont_key: [13],
+  timing_post_trial: 0
+};
+
+// Post task questionnaire
+var post_task_block = {
+   type: 'survey-text',
+   data: {
+       trial_id: "post_task_block"
+   },
+   questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
+              '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
+   rows: [15, 15],
+   columns: [60,60]
+};
+
+///////////////////
 
 var start_practice_block = {
   type: 'poldrack-text',
@@ -223,17 +253,6 @@ var test_block = {
       choice: choice
     });
   }
-};
-
-var end_block = {
-  type: 'poldrack-text',
-  data: {
-    trial_id: "end"
-  },
-  timing_response: 180000,
-  text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
-  cont_key: [13],
-  timing_post_trial: 0
 };
 
 
