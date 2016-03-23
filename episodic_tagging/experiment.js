@@ -73,6 +73,102 @@ var instruction_node = {
 
 // Practice block
 
+// Let's start with an example trial
+// Please indicate your choice between $20 now and the amount you will see on the screen
+// Fix - stimulus - jitter - x/check 
+// You have chosen: ...
+// Press enter to continue
+
+var practice_instruct_block = {
+  type: 'poldrack-text',
+  cont_key: [13],
+  data: {
+    trial_id: "instruction"
+  },
+  text: "<div class = centerbox><p class = block-text>Let's start with an example trial. Please indicate your choice between $20 now and the amount you will see on the screen.</p></div>",
+  timing_post_trial: 0,
+  timing_response: 180000
+};
+
+var fixation_block = {
+
+}
+
+var path_source = '/static/experiments/episodic_tagging/images/'
+
+var fixation_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<img src =' + path_source + 'green_circle.png </img>',
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: "fixation",
+    exp_stage: "practice"
+  },
+  response_ends_trial: false,
+  timing_stim: 500,
+  timing_post_trial: 0
+}
+
+var practice_stims = []
+
+practice_stims.push({
+    stimulus: '<div class = centerbox><div class = stimBox><p style="font-size:24px">$26</p><br><p style="font-size:24px">30 days</p></div></div>',
+    data: {large_amt: 26, later_del: 30, trial_id: 'stim', exp_stage: 'practice'}
+  })
+
+var practice_stim_block = {
+  type: 'poldrack-single-stim',
+  timeline: practice_stims,
+  is_html: true,
+  choices: 'none',
+  response_ends_trial: false,
+  timing_stim: 2000,
+  timing_post_trial: 0
+}
+
+var getJitterLength = function() {
+  return 3000 + Math.random() * 4000
+}
+
+var jitter_block = {
+  type: 'poldrack-single-stim',
+  stimulus: '<img src =' + path_source + 'red_circle.png </img>',
+  is_html: true,
+  choices: 'none',
+  data: {
+    trial_id: "fixation",
+    exp_stage: "practice"
+  },
+  response_ends_trial: false,
+  timing_stim: getJitterLength,
+  timing_post_trial: 0
+}
+
+//make the x and the check appear in two boxes (div's)
+//on click change border of that box
+//on click also get value of that box
+var response_block = {
+
+}
+
+//get rid of this if the box 
+var feedback_block = {
+
+}
+
+
+var practice_loop_node = {
+  timeline: [fixation_block, practice_stim_block, jitter_block, response_block, feedback_block, jitter_block],
+  loop_function: function(data) {
+    if (practice_stims.stimulus.length > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
 // Calibration block
 // In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
 // of money (delays [days]: 1, 2, 7, 14, 30, 90, 180). The hypothetical rewards always amounted to at least 20.5€, 
