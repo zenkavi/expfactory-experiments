@@ -3,11 +3,11 @@
 /* ************************************ */
 function getDisplayElement() {
   $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
+  return $('<div class = "display_stage"></div>').appendTo('body')
 }
 
 var getInstructFeedback = function() {
-  return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +'</p></div>'
+  return '<div class = "centerbox"><p class = "center-block-text">' + feedback_instruct_text +'</p></div>'
 }
 
 /* ************************************ */
@@ -41,13 +41,16 @@ var instructions_block = {
     trial_id: "instruction"
   },
   pages: [
-    '<div class = centerbox><p class = block-text>In this experiment you will be presented with two amounts of money to choose between. One of the options will be $20 available now. The other will be a variable amount available in the future. Your job is to indicate whether you prefer $20 now or the larger amount in the future.</p><p class = block-text>When making your choices you will only see the larger amount available in the future on the screen. The other option, $20 now, will not be shown.</p></div>',
-    '<div class = centerbox><p class = block-text>After seeing the larger amount of money available in the future you will be presented with a <font color: "red">red X</font> and a <font color: "green">green check</font>.</p><p class = block-text>You should choose the <font color: "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color: "green">green check</font> if you prefer the amount you have seen.</p></div>',
-    '<div class = centerbox><p class = block-text>You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
+    '<div class = "centerbox"><p class = "block-text">In this experiment you will be presented with two amounts of money to choose between. One of the options will be $20 available now. The other will be a variable amount available in the future. Your job is to indicate whether you prefer $20 now or the larger amount in the future.</p><p class = "block-text">When making your choices you will only see the larger amount available in the future on the screen. The other option, $20 now, will not be shown.</p></div>',
+    '<div class = "centerbox"><p class = "block-text">After seeing the larger amount of money available in the future you will be presented with a <font color= "red">red X</font> and a <font color= "green">green check</font>.</p><p class = "block-text">You should choose the <font color= "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color= "green">green check</font> if you prefer the amount you have seen.</p></div>',
+    '<div class = "centerbox"><p class = "block-text">You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
   ],
   allow_keys: false,
   show_clickable_nav: true
 };
+
+var sumInstructTime = 0 
+var instructTimeThresh = 0 
 
 var instruction_node = {
   timeline: [feedback_instruct_block, instructions_block],
@@ -71,13 +74,7 @@ var instruction_node = {
   }
 }
 
-// Practice block
-
-// Let's start with an example trial
-// Please indicate your choice between $20 now and the amount you will see on the screen
-// Fix - stimulus - jitter - x/check 
-// You have chosen: ...
-// Press enter to continue
+// Practice 
 
 var practice_instruct_block = {
   type: 'poldrack-text',
@@ -85,20 +82,14 @@ var practice_instruct_block = {
   data: {
     trial_id: "instruction"
   },
-  text: "<div class = centerbox><p class = block-text>Let's start with an example trial. Please indicate your choice between $20 now and the amount you will see on the screen.</p></div>",
+  text: "<div class = 'centerbox'><p class = 'block-text'>Here is an example trial. Please indicate your choice between $20 now and the amount you will see on the screen.</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
   timing_post_trial: 0,
   timing_response: 180000
 };
 
 var fixation_block = {
-
-}
-
-var path_source = '/static/experiments/episodic_tagging/images/'
-
-var fixation_block = {
-  type: 'poldrack-single-stim',
-  stimulus: '<img src =' + path_source + 'green_circle.png </img>',
+  type: 'single-stim',
+  stimulus: "<div id = 'green_circle' style = 'font-size:150px; color: lime'>&#9679;</div>",
   is_html: true,
   choices: 'none',
   data: {
@@ -106,68 +97,74 @@ var fixation_block = {
     exp_stage: "practice"
   },
   response_ends_trial: false,
-  timing_stim: 500,
-  timing_post_trial: 0
+  timing_stim: -1,
+  timing_response: 50000000
 }
 
-var practice_stims = []
+// var practice_stim_block = {
+//   type: 'single-stim',
+//   stimulus: '<div class = "centerbox"><div class = "stimBox"><p style="font-size:240px">$26</p><br><p style="font-size:240px">30 days</p></div></div>',
+//   data: {large_amt: 26, later_del: 30, trial_id: 'stim', exp_stage: 'practice'},
+//   is_html: true,
+//   choices: 'none',
+//   response_ends_trial: false,
+//   timing_stim: -1,
+//   timing_response: 2000
+// }
 
-practice_stims.push({
-    stimulus: '<div class = centerbox><div class = stimBox><p style="font-size:24px">$26</p><br><p style="font-size:24px">30 days</p></div></div>',
-    data: {large_amt: 26, later_del: 30, trial_id: 'stim', exp_stage: 'practice'}
-  })
+// var getJitterLength = function() {
+//   return 3000 + Math.random() * 4000
+// }
 
-var practice_stim_block = {
-  type: 'poldrack-single-stim',
-  timeline: practice_stims,
-  is_html: true,
-  choices: 'none',
-  response_ends_trial: false,
-  timing_stim: 2000,
-  timing_post_trial: 0
-}
+// var jitter_block = {
+//   type: 'single-stim',
+//   stimulus: ,
+//   is_html: true,
+//   choices: 'none',
+//   data: {
+//     trial_id: "fixation",
+//     exp_stage: "practice"
+//   },
+//   response_ends_trial: false,
+//   timing_stim: -1,
+//   timing_response: getJitterLength,
+// }
 
-var getJitterLength = function() {
-  return 3000 + Math.random() * 4000
-}
-
-var jitter_block = {
-  type: 'poldrack-single-stim',
-  stimulus: '<img src =' + path_source + 'red_circle.png </img>',
-  is_html: true,
-  choices: 'none',
-  data: {
-    trial_id: "fixation",
-    exp_stage: "practice"
-  },
-  response_ends_trial: false,
-  timing_stim: getJitterLength,
-  timing_post_trial: 0
-}
-
-//make the x and the check appear in two boxes (div's)
-//on click change border of that box
-//on click also get value of that box
-var response_block = {
-
-}
-
-//get rid of this if the box 
-var feedback_block = {
-
-}
-
-
-var practice_loop_node = {
-  timeline: [fixation_block, practice_stim_block, jitter_block, response_block, feedback_block, jitter_block],
-  loop_function: function(data) {
-    if (practice_stims.stimulus.length > 0) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-}
+// //make the x and the check appear in two boxes (div's)
+// //on click change border of that box
+// //on click also get value of that box
+// var response_block = {
+//   type: 'single-stim',
+//   stimulus: ,
+//   is_html: true,
+//   choices: [80,81],
+//   data: {
+//     trial_id: "response",
+//     exp_stage: "practice",
+//     left_x: 1
+//   },
+//   response_ends_trial: false,
+//   timing_stim: -1,
+//   timing_response: 2000,
+//   on_finish: function(data) {
+//     var choice = false;
+//     var feedback_stim = false;
+//     if (data.key_press == 80 && data.left_x == 1) {
+//       choice = 'll';
+//     } else if (data.key_press == 81 && data.left_x == 1) {
+//       choice = 'ss';
+//     }
+//     else if (data.key_press == 81 && data.left_x == 0) {
+//       choice = 'll';
+//     }
+//     else if (data.key_press == 80 && data.left_x == 0) {
+//       choice = 'ss';
+//     }
+//     jsPsych.data.addDataToLastTrial({
+//       choice: choice
+//     });
+//   }
+// }
 
 // Calibration block
 // In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
@@ -249,7 +246,7 @@ var post_task_block = {
 //Set up experiment
 var episodic_tagging_experiment = []
 episodic_tagging_experiment.push(instruction_node);
-episodic_tagging_experiment.push(start_practice_block);
+episodic_tagging_experiment.push(practice_instruct_block);
+episodic_tagging_experiment.push(fixation_block);
 
-episodic_tagging_experiment.push(end_block);
-episodic_tagging_experiment.push(post_task_block);
+
