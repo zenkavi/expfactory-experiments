@@ -1,36 +1,15 @@
-.display_stage {
-    position: fixed;
-    background: black;
-    left: 5vw;
-    top: 2vh;
-    height: 94vh;
-    width: 90vw;
-    border-radius: 15px;
-    border: 1vh solid #D0D0D0;
-    z-index: 0;
-}
-
-.instructionBox {
-	position: relative;
-	width: 60vw;
-	height: 10vw;
-	left: 50%;
-	top: 3%;
-	transform: translate(-50%, 0%);
+.jspsych-display-element {
+	background-color: black;
+	color: white
 }
 
 .jspsych-instructions-nav > p {
   margin-top: 10px;
 }
 
-.display_stage > div, .display_stage > p {
-  color: white;
-}
-
-
 #jspsych-single-stim-stimulus {
-  width: 50vw;
-  height: 60vh;
+  width: 70vw;
+  height: 80vh;
   position:absolute;
   top:50%;
   left:50%;
@@ -38,12 +17,23 @@
   transform: translate(-50%,-50%);
 }
 
-#green_circle {
-	width: 20vw;
-	height: 20vw;
+.circle {
+  position:absolute;
+  top:50%;
+  left:50%;
+  margin-right:-50%;
+  transform: translate(-50%,-50%);
+}
+
+.stim-text {
+	text-align: center
+}
+
+.mark{
+	font-size: 360px;
+	display: inline;
+	margin: 100px;
 	position:relative;
 	top:50%;
-	left:50%;
-	margin-right:0%;
 	transform: translate(-50%,-50%);
 }

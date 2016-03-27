@@ -1,11 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = "display_stage"></div>').appendTo('body')
-}
-
 var getInstructFeedback = function() {
   return '<div class = "centerbox"><p class = "center-block-text">' + feedback_instruct_text +'</p></div>'
 }
@@ -42,7 +37,7 @@ var instructions_block = {
   },
   pages: [
     '<div class = "centerbox"><p class = "block-text">In this experiment you will be presented with two amounts of money to choose between. One of the options will be $20 available now. The other will be a variable amount available in the future. Your job is to indicate whether you prefer $20 now or the larger amount in the future.</p><p class = "block-text">When making your choices you will only see the larger amount available in the future on the screen. The other option, $20 now, will not be shown.</p></div>',
-    '<div class = "centerbox"><p class = "block-text">After seeing the larger amount of money available in the future you will be presented with a <font color= "red">red X</font> and a <font color= "green">green check</font>.</p><p class = "block-text">You should choose the <font color= "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color= "green">green check</font> if you prefer the amount you have seen.</p></div>',
+    '<div class = "centerbox"><p class = "block-text">After seeing the larger amount of money available in the future you will be presented with a <font color= "red">red X</font> and a <font color= "lime">green check</font>.</p><p class = "block-text">You should choose the <font color= "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color= "lime">green check</font> if you prefer the amount you have seen.</p></div>',
     '<div class = "centerbox"><p class = "block-text">You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
   ],
   allow_keys: false,
@@ -79,9 +74,7 @@ var instruction_node = {
 var practice_instruct_block = {
   type: 'poldrack-text',
   cont_key: [13],
-  data: {
-    trial_id: "instruction"
-  },
+  data: {trial_id: "instruction"},
   text: "<div class = 'centerbox'><p class = 'block-text'>Here is an example trial. Please indicate your choice between $20 now and the amount you will see on the screen.</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
   timing_post_trial: 0,
   timing_response: 180000
@@ -89,53 +82,82 @@ var practice_instruct_block = {
 
 var fixation_block = {
   type: 'single-stim',
-  stimulus: "<div id = 'green_circle' style = 'font-size:150px; color: lime'>&#9679;</div>",
+  stimulus: "<div class = 'circle' id = 'green_circle' style = 'font-size:150px; color: lime'>&#9679;</div>",
   is_html: true,
   choices: 'none',
+  data: {trial_id: "fixation", exp_stage: "practice"},
+  response_ends_trial: false,
+  timing_stim: -1,
+  timing_response: 500
+}
+
+var practice_stim_block = {
+  type: 'single-stim',
+  stimulus: '<div class = "centerbox"><div class = "stim-text"><p style="font-size:100px">$26</p><br><p style="font-size:100px">30 days</p></div></div>',
+  data: {large_amt: 26, later_del: 30, trial_id: 'stim', exp_stage: 'practice'},
+  is_html: true,
+  choices: 'none',
+  response_ends_trial: false,
+  timing_stim: -1,
+  timing_response: 2000
+}
+
+var getJitterLength = function() {
+  return 3000 + Math.random() * 4000
+}
+
+var jitterLength = getJitterLength
+
+var jitter_block = {
+  type: 'single-stim',
+  stimulus: "<div class = 'circle' id = 'red_circle' style = 'font-size:150px; color: red'>&#9679;</div>",
+  is_html: true,
+  choices: 'none',
+  data: {trial_id: "jitter",exp_stage: "practice", jitterLength: jitterLength},
+  response_ends_trial: false,
+  timing_stim: -1,
+  timing_response: jitterLength,
+}
+
+var response_block = {
+  type: 'single-stim',
+  stimulus: '<div class = "mark" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark" id = "check-mark" style = "color:lime">&#10003;</div>',
+  is_html: true,
+  choices: [80,81],
   data: {
-    trial_id: "fixation",
-    exp_stage: "practice"
+    trial_id: "response",
+    exp_stage: "practice",
+    left_x: 1
   },
   response_ends_trial: false,
   timing_stim: -1,
-  timing_response: 50000000
+  timing_response: 200000000,
+  on_finish: function(data) {
+    var choice = false;
+    var feedback_stim = false;
+    if (data.key_press == 80 && data.left_x == 1) {
+      choice = 'll';
+      
+    } else if (data.key_press == 81 && data.left_x == 1) {
+      choice = 'ss';
+      
+    }
+    else if (data.key_press == 81 && data.left_x == 0) {
+      choice = 'll';
+    }
+    else if (data.key_press == 80 && data.left_x == 0) {
+      choice = 'ss';
+      
+    }
+    jsPsych.data.addDataToLastTrial({
+      choice: choice
+    });
+  }
 }
 
-// var practice_stim_block = {
-//   type: 'single-stim',
-//   stimulus: '<div class = "centerbox"><div class = "stimBox"><p style="font-size:240px">$26</p><br><p style="font-size:240px">30 days</p></div></div>',
-//   data: {large_amt: 26, later_del: 30, trial_id: 'stim', exp_stage: 'practice'},
-//   is_html: true,
-//   choices: 'none',
-//   response_ends_trial: false,
-//   timing_stim: -1,
-//   timing_response: 2000
-// }
-
-// var getJitterLength = function() {
-//   return 3000 + Math.random() * 4000
-// }
-
-// var jitter_block = {
-//   type: 'single-stim',
-//   stimulus: ,
-//   is_html: true,
-//   choices: 'none',
-//   data: {
-//     trial_id: "fixation",
-//     exp_stage: "practice"
-//   },
-//   response_ends_trial: false,
-//   timing_stim: -1,
-//   timing_response: getJitterLength,
-// }
-
-// //make the x and the check appear in two boxes (div's)
-// //on click change border of that box
-// //on click also get value of that box
 // var response_block = {
 //   type: 'single-stim',
-//   stimulus: ,
+//   stimulus: '<div class = "mark" id = "x-mark">&#10005;</div><div class = "mark" id = "check-mark">&#10003;</div>',
 //   is_html: true,
 //   choices: [80,81],
 //   data: {
@@ -151,14 +173,18 @@ var fixation_block = {
 //     var feedback_stim = false;
 //     if (data.key_press == 80 && data.left_x == 1) {
 //       choice = 'll';
+//       $('.responded').find('check-mark').css("border": "10px solid white")
 //     } else if (data.key_press == 81 && data.left_x == 1) {
 //       choice = 'ss';
+//       $('.responded').find('x-mark').css("border": "10px solid white")
 //     }
 //     else if (data.key_press == 81 && data.left_x == 0) {
 //       choice = 'll';
+//       $('.responded').find('check-mark').css("border": "10px solid white")
 //     }
 //     else if (data.key_press == 80 && data.left_x == 0) {
 //       choice = 'ss';
+//       $('.responded').find('x-mark').css("border": "10px solid white")
 //     }
 //     jsPsych.data.addDataToLastTrial({
 //       choice: choice
@@ -248,5 +274,7 @@ var episodic_tagging_experiment = []
 episodic_tagging_experiment.push(instruction_node);
 episodic_tagging_experiment.push(practice_instruct_block);
 episodic_tagging_experiment.push(fixation_block);
-
+episodic_tagging_experiment.push(practice_stim_block);
+episodic_tagging_experiment.push(jitter_block);
+episodic_tagging_experiment.push(response_block);
 
