@@ -106,7 +106,7 @@ var getJitterLength = function() {
   return 3000 + Math.random() * 4000
 }
 
-var jitterLength = getJitterLength
+var jitterLength = getJitterLength()
 
 var jitter_block = {
   type: 'single-stim',
@@ -121,76 +121,53 @@ var jitter_block = {
 
 var response_block = {
   type: 'single-stim',
-  stimulus: '<div class = "mark" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark" id = "check-mark" style = "color:lime">&#10003;</div>',
+  stimulus: '<div class = "mark lft" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark rght" id = "check-mark" style = "color:lime">&#10003;</div>',
   is_html: true,
   choices: [80,81],
   data: {
     trial_id: "response",
     exp_stage: "practice",
-    left_x: 1
+    left_x: 1,
+    large_amt: 26, 
+    later_del: 30
   },
-  response_ends_trial: false,
+  response_ends_trial: true,
   timing_stim: -1,
-  timing_response: 200000000,
+  timing_response: 2000, //how long to wait if no response
   on_finish: function(data) {
+    
     var choice = false;
-    var feedback_stim = false;
-    if (data.key_press == 80 && data.left_x == 1) {
-      choice = 'll';
-      
-    } else if (data.key_press == 81 && data.left_x == 1) {
-      choice = 'ss';
-      
+           
+    $('.jspsych-display-element').html('<div id = "jspsych-single-stim-stimulus"></div>')
+    $('#jspsych-single-stim-stimulus').append(data.stimulus)
+
+    if(data.key_press == 80){
+      $('.rght').css('border', '10px white solid')
+      if(data.left_x == 1){
+        choice = 'll'
+      } else if (data.left_x == 0){
+        choice = 'ss'
+      }
+    } 
+    else if (data.key_press == 81){
+      $('.lft').css('border', '10px white solid')
+      if(data.left_x == 1){
+        choice = 'ss'
+      } else if (data.left_x == 0){
+        choice ='ll'
+      }
     }
-    else if (data.key_press == 81 && data.left_x == 0) {
-      choice = 'll';
-    }
-    else if (data.key_press == 80 && data.left_x == 0) {
-      choice = 'ss';
-      
-    }
+
+    setTimeout(function() {
+        $('.jspsych-display-element').html('');
+      }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
+
     jsPsych.data.addDataToLastTrial({
       choice: choice
     });
   }
 }
 
-// var response_block = {
-//   type: 'single-stim',
-//   stimulus: '<div class = "mark" id = "x-mark">&#10005;</div><div class = "mark" id = "check-mark">&#10003;</div>',
-//   is_html: true,
-//   choices: [80,81],
-//   data: {
-//     trial_id: "response",
-//     exp_stage: "practice",
-//     left_x: 1
-//   },
-//   response_ends_trial: false,
-//   timing_stim: -1,
-//   timing_response: 2000,
-//   on_finish: function(data) {
-//     var choice = false;
-//     var feedback_stim = false;
-//     if (data.key_press == 80 && data.left_x == 1) {
-//       choice = 'll';
-//       $('.responded').find('check-mark').css("border": "10px solid white")
-//     } else if (data.key_press == 81 && data.left_x == 1) {
-//       choice = 'ss';
-//       $('.responded').find('x-mark').css("border": "10px solid white")
-//     }
-//     else if (data.key_press == 81 && data.left_x == 0) {
-//       choice = 'll';
-//       $('.responded').find('check-mark').css("border": "10px solid white")
-//     }
-//     else if (data.key_press == 80 && data.left_x == 0) {
-//       choice = 'ss';
-//       $('.responded').find('x-mark').css("border": "10px solid white")
-//     }
-//     jsPsych.data.addDataToLastTrial({
-//       choice: choice
-//     });
-//   }
-// }
 
 // Calibration block
 // In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
