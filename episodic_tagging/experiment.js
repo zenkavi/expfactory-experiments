@@ -85,7 +85,7 @@ var fixation_block = {
   stimulus: "<div class = 'circle' id = 'green_circle' style = 'font-size:150px; color: lime'>&#9679;</div>",
   is_html: true,
   choices: 'none',
-  data: {trial_id: "fixation", exp_stage: "practice"},
+  data: {trial_id: "fixation"},
   response_ends_trial: false,
   timing_stim: -1,
   timing_response: 500
@@ -113,13 +113,13 @@ var jitter_block = {
   stimulus: "<div class = 'circle' id = 'red_circle' style = 'font-size:150px; color: red'>&#9679;</div>",
   is_html: true,
   choices: 'none',
-  data: {trial_id: "jitter",exp_stage: "practice", jitterLength: jitterLength},
+  data: {trial_id: "jitter", jitterLength: jitterLength},
   response_ends_trial: false,
   timing_stim: -1,
   timing_response: jitterLength,
 }
 
-var response_block = {
+var practice_response_block = {
   type: 'single-stim',
   stimulus: '<div class = "mark lft" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark rght" id = "check-mark" style = "color:lime">&#10003;</div>',
   is_html: true,
@@ -168,6 +168,27 @@ var response_block = {
   }
 }
 
+var getPracticeChoice = function(){
+  var choice = jsPsych.data.getLastTrialData().choice
+  var return_text = ''
+  if (choice == 'll'){
+    return_text = '$26 in 30 days'
+  } else if (choice == 'ss'){
+    return_text = '$20 today'
+  } else {
+    return_text = 'nothing'
+  }
+  return return_text
+}
+
+var test_instruct_block = {
+  type: 'poldrack-text',
+  cont_key: [13],
+  data: {trial_id: "instruction"},
+  text: "<div class = 'centerbox'><p class = 'block-text'>You chose" + getPracticeChoice + ". <p class = 'block-text'>You will now begin the calibration trials. Please indicate your choice between $20 now and the amount you see on the screen. </p><p class = 'block-text'>Make sure to indicate your <strong>true</strong> preferences</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
+  timing_post_trial: 0,
+  timing_response: 180000
+}; 
 
 // Calibration block
 // In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
@@ -178,8 +199,224 @@ var response_block = {
 // accepted and rejected delayed amounts reached a delay-specific criterion [Criterion in €: 1.0 (1d), 1.5 (2d), 
 // 2.0 (7d), 2.0 (14d), 3.0 (30d), 4.0 (90d), 4.0 (180d)]
 
-// fixation block - stim block - response block - jitter block --> calibration node
-// green_circle.png red_circle.png red_x.png green_check.png
+// the assignment of true for a given trace should happen at the response block
+// in the stim block it should take all the data for that trace, check if there is a true if not
+// check last two responses
+// increase if both are impatient, decrease if both are patient
+// what if one is patient and the other impatient?
+// there should be some conditions: e.g. in the beginning when there is no data for it
+
+'<div class = "centerbox"><div class = "stim-text"><p style="font-size:100px">$'+amount+'</p><br><p style="font-size:100px">'+delay+ 'days</p></div></div>'
+
+var calibStim = function(){
+
+  var amount = ''
+  var delay = ''
+
+  var traces = [1,2,7,14,30, 90, 180]
+
+  //i = choose random number between 0-6
+
+  var traceData = getDataMatchingCondition(jsPsych.data.getData(), 'later_del', trace[i])
+
+  // if beginning
+  if(traceData.length == 0){
+    // choose random number that is larger than 20 + threshold
+    if (trace[i] == 1){
+      amount = 20 + 1 + randomNumber
+    } else if (trace[i] == 2){
+      amount = 20 + 1.5 + randomNumber
+    } else if (trace[i] == 7 | trace[i] == 14){
+      amount = 20 + 2 + randomNumber
+    } else if (trace[i] == 30){
+      amount = 20 + 3 + randomNumber
+    } else if (trace[i] == 90 | trace[i] == 180){
+      amount = 20 + 4 + randomNumber
+    }
+  } else {
+     // if the criterion is true 
+      if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
+      //then choose new number
+      } else { // if criterion is false
+           // if the last two choices are impatient
+          if(traceData[traceData.length - 1].choice == 'll' & traceData[traceData.length - 2].choice == 'll'){
+            //decrease amount but not below threshold
+            var large_amt = traceData[traceData.length - 1].large_amt
+
+            if (trace[i] == 1){
+              amount = 
+            } else if (trace[i] == 2){
+              amount = 
+            } else if (trace[i] == 7 | trace[i] == 14){
+              amount = 
+            } else if (trace[i] == 30){
+              amount = 
+            } else if (trace[i] == 90 | trace[i] == 180){
+              amount = 
+            }
+          }
+      }
+  }
+}
+
+var calib_stim_block = {
+  type: 'single-stim',
+  stimulus: ,
+  data: {
+    large_amt: , 
+    later_del: , 
+    trial_id: 'stim', 
+    exp_stage: 'calibration'
+  },
+  is_html: true,
+  choices: 'none',
+  response_ends_trial: false,
+  timing_stim: -1,
+  timing_response: 2000
+}
+
+var setLeftX = function(){
+  return Math.round(Math.random())
+}
+
+var setResponseStim = function(){
+  var stimulus = ''
+  if (setLeftX()){
+    stimulus = '<div class = "mark lft" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark rght" id = "check-mark" style = "color:lime">&#10003;</div>'
+  } else {
+    stimulus = '<div class = "mark lft" id = "check-mark" style = "color:lime">&#10003;</div><div class = "mark rght" id = "x-mark" style = "color:red">&#10005;</div>'
+  }
+  return stimulus
+}
+
+var getLeftX = function(stimulus){
+  var left_x = 0
+  if($('.mark lft').id == 'x-mark'){ // check if this is the correct command to get id of the selected item
+    left_x = 1
+  }
+  return left_x  
+}
+
+var checkCriterion = function(data){
+
+  var val_diff = data.large_amt - 20
+
+  var criterion = false
+
+  if (data.later_del == 1 && val_diff <= 1){
+    criterion = true
+  } else if (data.later_del == 2 && val_diff <= 1.5){
+    criterion = true
+  } else if (data.later_del == 7 && val_diff <= 2){
+    criterion = true
+  } else if (data.later_del == 14 && val_diff <= 2){
+    criterion = true
+  } else if (data.later_del == 30 && val_diff <= 3){
+    criterion = true
+  } else if (data.later_del == 90 && val_diff <= 4){
+    criterion = true
+  } else if (data.later_del == 180 && val_diff <= 4){
+    criterion = true
+  }
+
+  return criterion
+}
+
+var calib_response_block = {
+  type: 'single-stim',
+  stimulus: setResponseStim, //not sure if this would work
+  is_html: true,
+  choices: [80,81],
+  data: {
+    trial_id: "response",
+    exp_stage: "calibration",
+    left_x: getLeftX(jsPsych.data.getLastTrialData().stimulus), // re-check how to determine this 
+    large_amt: , 
+    later_del: , // also trace
+  },
+  response_ends_trial: true,
+  timing_stim: -1,
+  timing_response: 2000, //how long to wait if no response
+  on_finish: function(data) {
+    
+    var choice = false;
+           
+    $('.jspsych-display-element').html('<div id = "jspsych-single-stim-stimulus"></div>')
+    $('#jspsych-single-stim-stimulus').append(data.stimulus)
+
+    if(data.key_press == 80){
+      $('.rght').css('border', '10px white solid')
+      if(data.left_x == 1){
+        choice = 'll'
+      } else if (data.left_x == 0){
+        choice = 'ss'
+      }
+    } 
+    else if (data.key_press == 81){
+      $('.lft').css('border', '10px white solid')
+      if(data.left_x == 1){
+        choice = 'ss'
+      } else if (data.left_x == 0){
+        choice ='ll'
+      }
+    }
+
+    setTimeout(function() {
+        $('.jspsych-display-element').html('');
+      }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
+
+    //check criterion for trace given choice
+    var criterion = checkCriterion(data)
+
+    jsPsych.data.addDataToLastTrial({
+      choice: choice
+      criterion: criterion
+    });
+  }
+}
+
+var getDataMatchingCondition = function(objectArray, property, value){
+  var tmp = []
+  for(var i = 0; i<objectArray.length; i++){
+    if (objectArray[i][property] == value){
+      tmp.push(objectArray[i])
+    }
+  }
+  return tmp
+}
+
+var calibration_node = {
+  
+  //order of blocks that this node will go through 
+  timeline: [fixation_block, calib_stim_block, jitter_block, response_block],
+  
+  /* This function defines stopping criteria */
+  loop_function: function(data) {
+
+    var traces = [1,2,7,14,30, 90, 180]
+    var criteria = 0 //not sureif i should define this here
+
+    //loop through the data of each trace
+    for (var i = 0; i < traces.length; i++) {
+      //get all data for a given trace
+      var traceData = getDataMatchingCondition(data, 'later_del', trace[i])
+      //see if there are any objects in this array for the given trace where the criterion is true
+      if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
+        //if yes the increase the criteria for that trace
+        criteria ++
+      }
+    }
+
+    //looping node termination conditions
+    //if not equal to 7 for all traces then return true and continue looping
+    if (criteria != 7) {
+      return true
+      //if all criteria are complete then return false and break out of loop
+    } else if (criteria == 7) {
+      return false
+    }
+  }
+}
 
 // Indifference point calculation
 
@@ -253,5 +490,7 @@ episodic_tagging_experiment.push(practice_instruct_block);
 episodic_tagging_experiment.push(fixation_block);
 episodic_tagging_experiment.push(practice_stim_block);
 episodic_tagging_experiment.push(jitter_block);
-episodic_tagging_experiment.push(response_block);
+episodic_tagging_experiment.push(practice_response_block);
+episodic_tagging_experiment.push(test_instruct_block);
+episodic_tagging_experiment.push(calibration_node);
 
