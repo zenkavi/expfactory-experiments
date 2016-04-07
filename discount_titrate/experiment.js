@@ -225,7 +225,7 @@ var feedback_instruct_text =
 var feedback_instruct_block = {
 	type: 'poldrack-text',
 	data: {
-		trial_id: "instructions"
+		trial_id: 'instruction'
 	},
 	cont_key: [13],
 	text: getInstructFeedback,
@@ -236,7 +236,7 @@ var feedback_instruct_block = {
 var instructions_block = {
 	type: 'poldrack-instructions',
 	data: {
-		trial_id: "instructions"
+		trial_id: 'instruction'
 	},
 	pages: [
 		'<div class = centerbox><p class = block-text>In this experiment you will be presented with two amounts of money to choose between. These amounts will be available at different time points. Your job is to indicate which option you would prefer by pressing <strong>"q"</strong> for the left option and <strong>"p"</strong> for the right option.</p><p class = block-text>You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
@@ -366,9 +366,7 @@ discount_titrate_experiment.push(instruction_node);
 discount_titrate_experiment.push(start_practice_block);
 discount_titrate_experiment.push(practice_block);
 discount_titrate_experiment.push(start_test_block);
-for (i = 0; i < trials.length; i++) {
-	discount_titrate_experiment.push(test_block);
-}
+discount_titrate_experiment.push(test_block);
 discount_titrate_experiment.push(attention_node)
 discount_titrate_experiment.push(post_task_block)
 discount_titrate_experiment.push(end_block)
