@@ -37,7 +37,7 @@ var instructions_block = {
   },
   pages: [
     '<div class = "centerbox"><p class = "block-text">In this experiment you will be presented with two amounts of money to choose between. One of the options will be $20 available now. The other will be a variable amount available in the future. Your job is to indicate whether you prefer $20 now or the larger amount in the future.</p><p class = "block-text">When making your choices you will only see the larger amount available in the future on the screen. The other option, $20 now, will not be shown.</p></div>',
-    '<div class = "centerbox"><p class = "block-text">After seeing the larger amount of money available in the future you will be presented with a <font color= "red">red X</font> and a <font color= "lime">green check</font>.</p><p class = "block-text">You should choose the <font color= "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color= "lime">green check</font> if you prefer the amount you have seen.</p></div>',
+    '<div class = "centerbox"><p class = "block-text">After seeing the larger amount of money available in the future you will be presented with a <font color= "red">red X</font> and a <font color= "lime">green check</font>.</p><p class = "block-text">You should choose the <font color= "red">red X</font> if you reject the amount you have seen and prefer $20 now. On the other hand, you should select the <font color= "lime">green check</font> if you prefer the amount you have seen. Indicate your preferences using the "p" and "q" keys.</p></div>',
     '<div class = "centerbox"><p class = "block-text">You should indicate your <strong>true</strong> preference because at the end of the experiment a random trial will be chosen and you will receive a bonus payment proportional to the option you selected at the time point you chose.</p></div>',
   ],
   allow_keys: false,
@@ -75,7 +75,7 @@ var practice_instruct_block = {
   type: 'poldrack-text',
   cont_key: [13],
   data: {trial_id: "instruction"},
-  text: "<div class = 'centerbox'><p class = 'block-text'>Here is an example trial. Please indicate your choice between $20 now and the amount you will see on the screen.</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
+  text: "<div class = 'centerbox'><p class = 'block-text'>Here is an example trial. Please indicate your choice between $20 now and the amount you will see on the screen. Press 'p' for right and 'q' for left. </p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
   timing_post_trial: 0,
   timing_response: 180000
 };
@@ -158,9 +158,11 @@ var practice_response_block = {
       }
     }
 
-    setTimeout(function() {
-        $('.jspsych-display-element').html('');
-      }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
+    // commented this out because it seemed to clear the screen for the following test_instruct_block 
+    // make sure to check later that the timings are correct for this response screen using timing_response
+    // setTimeout(function() {
+    //     $('.jspsych-display-element').html('');
+    //   }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
 
     jsPsych.data.addDataToLastTrial({
       choice: choice
@@ -170,25 +172,24 @@ var practice_response_block = {
 
 var getPracticeChoice = function(){
   var choice = jsPsych.data.getLastTrialData().choice
-  var return_text = ''
   if (choice == 'll'){
-    return_text = '$26 in 30 days'
+    return "<div class = 'centerbox'><p class = 'block-text'>You chose $26 in 30 days. <p class = 'block-text'>You will now begin the calibration trials. Please indicate your choice between $20 now and the amount you see on the screen. </p><p class = 'block-text'>Make sure to indicate your <strong>true</strong> preferences</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>"
   } else if (choice == 'ss'){
-    return_text = '$20 today'
+    return "<div class = 'centerbox'><p class = 'block-text'>You chose $20 today. <p class = 'block-text'>You will now begin the calibration trials. Please indicate your choice between $20 now and the amount you see on the screen. </p><p class = 'block-text'>Make sure to indicate your <strong>true</strong> preferences</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>"
   } else {
-    return_text = 'nothing'
+    return "<div class = 'centerbox'><p class = 'block-text'>You did not make a choice. Please make sure to respond before the trial ends. <p class = 'block-text'>You will now begin the calibration trials. Please indicate your choice between $20 now and the amount you see on the screen. </p><p class = 'block-text'>Make sure to indicate your <strong>true</strong> preferences</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>"
   }
-  return return_text
 }
 
 var test_instruct_block = {
   type: 'poldrack-text',
   cont_key: [13],
   data: {trial_id: "instruction"},
-  text: "<div class = 'centerbox'><p class = 'block-text'>You chose" + getPracticeChoice + ". <p class = 'block-text'>You will now begin the calibration trials. Please indicate your choice between $20 now and the amount you see on the screen. </p><p class = 'block-text'>Make sure to indicate your <strong>true</strong> preferences</p><p class = 'block-text'>Press <strong>enter</strong> to continue.</p></div>",
+  text: getPracticeChoice,
   timing_post_trial: 0,
   timing_response: 180000
 }; 
+
 
 // Calibration block
 // In this task, subjects made repeated choices between 20€ available immediately and larger but delayed hypothetical amounts 
@@ -206,20 +207,35 @@ var test_instruct_block = {
 // what if one is patient and the other impatient?
 // there should be some conditions: e.g. in the beginning when there is no data for it
 
+// What the output text string should look like
 '<div class = "centerbox"><div class = "stim-text"><p style="font-size:100px">$'+amount+'</p><br><p style="font-size:100px">'+delay+ 'days</p></div></div>'
+
+//function to generate random number within an interval
+function getRandom(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+//function to generate random integer within an interval
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
 
 var calibStim = function(){
 
+  //empty text strings to be populated
   var amount = ''
   var delay = ''
 
+  //traces (delays)
   var traces = [1,2,7,14,30, 90, 180]
 
-  //i = choose random number between 0-6
+  //Choose a random integer that can be used as an index to choose from the array of traces
+  var i = getRandomInt(0,6)
 
+  //get data for the chosen trace. if there isn't any this will be an empty array
   var traceData = getDataMatchingCondition(jsPsych.data.getData(), 'later_del', trace[i])
 
-  // if beginning
+  // if beginning (i.e. the length of the returned array is 0)
   if(traceData.length == 0){
     // choose random number that is larger than 20 + threshold
     if (trace[i] == 1){
@@ -259,164 +275,164 @@ var calibStim = function(){
   }
 }
 
-var calib_stim_block = {
-  type: 'single-stim',
-  stimulus: ,
-  data: {
-    large_amt: , 
-    later_del: , 
-    trial_id: 'stim', 
-    exp_stage: 'calibration'
-  },
-  is_html: true,
-  choices: 'none',
-  response_ends_trial: false,
-  timing_stim: -1,
-  timing_response: 2000
-}
+// var calib_stim_block = {
+//   type: 'single-stim',
+//   stimulus: ,
+//   data: {
+//     large_amt: , 
+//     later_del: , 
+//     trial_id: 'stim', 
+//     exp_stage: 'calibration'
+//   },
+//   is_html: true,
+//   choices: 'none',
+//   response_ends_trial: false,
+//   timing_stim: -1,
+//   timing_response: 2000
+// }
 
-var setLeftX = function(){
-  return Math.round(Math.random())
-}
+// var setLeftX = function(){
+//   return Math.round(Math.random())
+// }
 
-var setResponseStim = function(){
-  var stimulus = ''
-  if (setLeftX()){
-    stimulus = '<div class = "mark lft" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark rght" id = "check-mark" style = "color:lime">&#10003;</div>'
-  } else {
-    stimulus = '<div class = "mark lft" id = "check-mark" style = "color:lime">&#10003;</div><div class = "mark rght" id = "x-mark" style = "color:red">&#10005;</div>'
-  }
-  return stimulus
-}
+// var setResponseStim = function(){
+//   var stimulus = ''
+//   if (setLeftX()){
+//     stimulus = '<div class = "mark lft" id = "x-mark" style = "color:red">&#10005;</div><div class = "mark rght" id = "check-mark" style = "color:lime">&#10003;</div>'
+//   } else {
+//     stimulus = '<div class = "mark lft" id = "check-mark" style = "color:lime">&#10003;</div><div class = "mark rght" id = "x-mark" style = "color:red">&#10005;</div>'
+//   }
+//   return stimulus
+// }
 
-var getLeftX = function(stimulus){
-  var left_x = 0
-  if($('.mark lft').id == 'x-mark'){ // check if this is the correct command to get id of the selected item
-    left_x = 1
-  }
-  return left_x  
-}
+// var getLeftX = function(stimulus){
+//   var left_x = 0
+//   if($('.mark lft').id == 'x-mark'){ // check if this is the correct command to get id of the selected item
+//     left_x = 1
+//   }
+//   return left_x  
+// }
 
-var checkCriterion = function(data){
+// var checkCriterion = function(data){
 
-  var val_diff = data.large_amt - 20
+//   var val_diff = data.large_amt - 20
 
-  var criterion = false
+//   var criterion = false
 
-  if (data.later_del == 1 && val_diff <= 1){
-    criterion = true
-  } else if (data.later_del == 2 && val_diff <= 1.5){
-    criterion = true
-  } else if (data.later_del == 7 && val_diff <= 2){
-    criterion = true
-  } else if (data.later_del == 14 && val_diff <= 2){
-    criterion = true
-  } else if (data.later_del == 30 && val_diff <= 3){
-    criterion = true
-  } else if (data.later_del == 90 && val_diff <= 4){
-    criterion = true
-  } else if (data.later_del == 180 && val_diff <= 4){
-    criterion = true
-  }
+//   if (data.later_del == 1 && val_diff <= 1){
+//     criterion = true
+//   } else if (data.later_del == 2 && val_diff <= 1.5){
+//     criterion = true
+//   } else if (data.later_del == 7 && val_diff <= 2){
+//     criterion = true
+//   } else if (data.later_del == 14 && val_diff <= 2){
+//     criterion = true
+//   } else if (data.later_del == 30 && val_diff <= 3){
+//     criterion = true
+//   } else if (data.later_del == 90 && val_diff <= 4){
+//     criterion = true
+//   } else if (data.later_del == 180 && val_diff <= 4){
+//     criterion = true
+//   }
 
-  return criterion
-}
+//   return criterion
+// }
 
-var calib_response_block = {
-  type: 'single-stim',
-  stimulus: setResponseStim, //not sure if this would work
-  is_html: true,
-  choices: [80,81],
-  data: {
-    trial_id: "response",
-    exp_stage: "calibration",
-    left_x: getLeftX(jsPsych.data.getLastTrialData().stimulus), // re-check how to determine this 
-    large_amt: , 
-    later_del: , // also trace
-  },
-  response_ends_trial: true,
-  timing_stim: -1,
-  timing_response: 2000, //how long to wait if no response
-  on_finish: function(data) {
+// var calib_response_block = {
+//   type: 'single-stim',
+//   stimulus: setResponseStim, //not sure if this would work
+//   is_html: true,
+//   choices: [80,81],
+//   data: {
+//     trial_id: "response",
+//     exp_stage: "calibration",
+//     left_x: getLeftX(jsPsych.data.getLastTrialData().stimulus), // re-check how to determine this 
+//     large_amt: , 
+//     later_del: , // also trace
+//   },
+//   response_ends_trial: true,
+//   timing_stim: -1,
+//   timing_response: 2000, //how long to wait if no response
+//   on_finish: function(data) {
     
-    var choice = false;
+//     var choice = false;
            
-    $('.jspsych-display-element').html('<div id = "jspsych-single-stim-stimulus"></div>')
-    $('#jspsych-single-stim-stimulus').append(data.stimulus)
+//     $('.jspsych-display-element').html('<div id = "jspsych-single-stim-stimulus"></div>')
+//     $('#jspsych-single-stim-stimulus').append(data.stimulus)
 
-    if(data.key_press == 80){
-      $('.rght').css('border', '10px white solid')
-      if(data.left_x == 1){
-        choice = 'll'
-      } else if (data.left_x == 0){
-        choice = 'ss'
-      }
-    } 
-    else if (data.key_press == 81){
-      $('.lft').css('border', '10px white solid')
-      if(data.left_x == 1){
-        choice = 'ss'
-      } else if (data.left_x == 0){
-        choice ='ll'
-      }
-    }
+//     if(data.key_press == 80){
+//       $('.rght').css('border', '10px white solid')
+//       if(data.left_x == 1){
+//         choice = 'll'
+//       } else if (data.left_x == 0){
+//         choice = 'ss'
+//       }
+//     } 
+//     else if (data.key_press == 81){
+//       $('.lft').css('border', '10px white solid')
+//       if(data.left_x == 1){
+//         choice = 'ss'
+//       } else if (data.left_x == 0){
+//         choice ='ll'
+//       }
+//     }
 
-    setTimeout(function() {
-        $('.jspsych-display-element').html('');
-      }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
+//     setTimeout(function() {
+//         $('.jspsych-display-element').html('');
+//       }, 2000-data.rt); //how long after to clear display (however much is left from 2000 ms)
 
-    //check criterion for trace given choice
-    var criterion = checkCriterion(data)
+//     //check criterion for trace given choice
+//     var criterion = checkCriterion(data)
 
-    jsPsych.data.addDataToLastTrial({
-      choice: choice
-      criterion: criterion
-    });
-  }
-}
+//     jsPsych.data.addDataToLastTrial({
+//       choice: choice
+//       criterion: criterion
+//     });
+//   }
+// }
 
-var getDataMatchingCondition = function(objectArray, property, value){
-  var tmp = []
-  for(var i = 0; i<objectArray.length; i++){
-    if (objectArray[i][property] == value){
-      tmp.push(objectArray[i])
-    }
-  }
-  return tmp
-}
+// var getDataMatchingCondition = function(objectArray, property, value){
+//   var tmp = []
+//   for(var i = 0; i<objectArray.length; i++){
+//     if (objectArray[i][property] == value){
+//       tmp.push(objectArray[i])
+//     }
+//   }
+//   return tmp
+// }
 
-var calibration_node = {
+// var calibration_node = {
   
-  //order of blocks that this node will go through 
-  timeline: [fixation_block, calib_stim_block, jitter_block, response_block],
+//   //order of blocks that this node will go through 
+//   timeline: [fixation_block, calib_stim_block, jitter_block, response_block],
   
-  /* This function defines stopping criteria */
-  loop_function: function(data) {
+//   /* This function defines stopping criteria */
+//   loop_function: function(data) {
 
-    var traces = [1,2,7,14,30, 90, 180]
-    var criteria = 0 //not sureif i should define this here
+//     var traces = [1,2,7,14,30, 90, 180]
+//     var criteria = 0 //not sureif i should define this here
 
-    //loop through the data of each trace
-    for (var i = 0; i < traces.length; i++) {
-      //get all data for a given trace
-      var traceData = getDataMatchingCondition(data, 'later_del', trace[i])
-      //see if there are any objects in this array for the given trace where the criterion is true
-      if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
-        //if yes the increase the criteria for that trace
-        criteria ++
-      }
-    }
+//     //loop through the data of each trace
+//     for (var i = 0; i < traces.length; i++) {
+//       //get all data for a given trace
+//       var traceData = getDataMatchingCondition(data, 'later_del', trace[i])
+//       //see if there are any objects in this array for the given trace where the criterion is true
+//       if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
+//         //if yes the increase the criteria for that trace
+//         criteria ++
+//       }
+//     }
 
-    //looping node termination conditions
-    //if not equal to 7 for all traces then return true and continue looping
-    if (criteria != 7) {
-      return true
-      //if all criteria are complete then return false and break out of loop
-    } else if (criteria == 7) {
-      return false
-    }
-  }
-}
+//     //looping node termination conditions
+//     //if not equal to 7 for all traces then return true and continue looping
+//     if (criteria != 7) {
+//       return true
+//       //if all criteria are complete then return false and break out of loop
+//     } else if (criteria == 7) {
+//       return false
+//     }
+//   }
+// }
 
 // Indifference point calculation
 
@@ -492,5 +508,6 @@ episodic_tagging_experiment.push(practice_stim_block);
 episodic_tagging_experiment.push(jitter_block);
 episodic_tagging_experiment.push(practice_response_block);
 episodic_tagging_experiment.push(test_instruct_block);
-episodic_tagging_experiment.push(calibration_node);
+//episodic_tagging_experiment.push(calibration_node);
+episodic_tagging_experiment.push(end_block);
 
