@@ -220,59 +220,138 @@ function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
+var checkThreshold = function(amount, delay){
+  if(amount < 21 & delay == 1){
+    amount = 21 + Math.round(getRandom(0, 1)*10)/10
+  } else if (amount < 21.5 & delay == 2){
+    amount = 21.5 + Math.round(getRandom(0, 1)*10)/10
+  } else if (amount < 22 & (delay == 7 | delay == 14)){
+    amount = 22 + Math.round(getRandom(0, 1)*10)/10
+  } else if (amount < 23 & delay == 30){
+    amount = 23 + Math.round(getRandom(0, 1)*10)/10
+  } else if (amount < 24 & (delay == 90 | delay == 180)){
+    amount = 24 + Math.round(getRandom(0, 1)*10)/10
+  }
+
+  return amount
+}
+
+var jitterDelay = function(trace){
+  if (trace == 1){
+    delay = 1
+  } else if (trace == 2){
+    delay = getRandomInt(2, 6)
+  } else if (trace == 7){
+    delay = getRandomInt(7, 13)
+  } else if (trace == 14){
+    delay = getRandomInt(14, 20)
+  } else if (trace == 30){
+    delay = getRandomInt(25, 40)
+  } else if (trace == 90){
+    delay = getRandomInt(70, 110)
+  } else if (trace == 180){
+    delay = getRandomInt(150, 200)
+  }
+  return delay
+}
+
+// some fake data to test this function with
+// a jspsych data object
+// var data = [{trace: 1, later_del: 1, larger_amt: 40, criterion: false , choice: ll}, {trace: 1, later_del: 1, larger_amt: 30, criterion: false , choice: ll},{trace: 2, later_del: 4, larger_amt: 30, criterion: false , choice: ss},{}]
+
 var calibStim = function(){
 
-  //empty text strings to be populated
-  var amount = ''
-  var delay = ''
-
   //traces (delays)
+  //need to jitter the delays for each trace!
   var traces = [1,2,7,14,30, 90, 180]
 
   //Choose a random integer that can be used as an index to choose from the array of traces
-  var i = getRandomInt(0,6)
+  //var i = getRandomInt(0,6)
+  //FOR TESTING ONLY
+  var i = 0
 
   //get data for the chosen trace. if there isn't any this will be an empty array
-  var traceData = getDataMatchingCondition(jsPsych.data.getData(), 'later_del', trace[i])
+  //when delays are jittered for each trace then the matching variable name should be trace not later_del
+  // var traceData = getDataMatchingCondition(jsPsych.data.getData(), 'trace', trace[i])
+  //FOR TESTING ONLY
+  var traceData = data
 
   // if beginning (i.e. the length of the returned array is 0)
   if(traceData.length == 0){
-    // choose random number that is larger than 20 + threshold
-    if (trace[i] == 1){
-      amount = 20 + 1 + randomNumber
-    } else if (trace[i] == 2){
-      amount = 20 + 1.5 + randomNumber
-    } else if (trace[i] == 7 | trace[i] == 14){
-      amount = 20 + 2 + randomNumber
-    } else if (trace[i] == 30){
-      amount = 20 + 3 + randomNumber
-    } else if (trace[i] == 90 | trace[i] == 180){
-      amount = 20 + 4 + randomNumber
+    // choose random number that is larger than 20 + threshold (rounded to first decimal)
+    // one reference suggests that there was no upper bound on the initial value but here it is capped at $200
+    if (traces[i] == 1){
+      amount = 20 + 1 + Math.round(getRandom(20, 200)*10)/10
+    } else if (traces[i] == 2){
+      amount = 20 + 1.5 + Math.round(getRandom(20, 200)*10)/10
+    } else if (traces[i] == 7 | traces[i] == 14){
+      amount = 20 + 2 + Math.round(getRandom(20, 200)*10)/10
+    } else if (traces[i] == 30){
+      amount = 20 + 3 + Math.round(getRandom(20, 200)*10)/10
+    } else if (traces[i] == 90 | traces[i] == 180){
+      amount = 20 + 4 + Math.round(getRandom(20, 200)*10)/10
     }
-  } else {
-     // if the criterion is true 
-      if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
-      //then choose new number
-      } else { // if criterion is false
-           // if the last two choices are impatient
-          if(traceData[traceData.length - 1].choice == 'll' & traceData[traceData.length - 2].choice == 'll'){
-            //decrease amount but not below threshold
-            var large_amt = traceData[traceData.length - 1].large_amt
+    
+  } 
 
-            if (trace[i] == 1){
-              amount = 
-            } else if (trace[i] == 2){
-              amount = 
-            } else if (trace[i] == 7 | trace[i] == 14){
-              amount = 
-            } else if (trace[i] == 30){
-              amount = 
-            } else if (trace[i] == 90 | trace[i] == 180){
-              amount = 
+  // what about when there is only choice so far? then keep amount similar
+  else if(traceData.length == 1){
+    var large_amt = traceData[traceData.length - 1].large_amt
+    // change by 1% randomly
+    if (getRandomInt(0, 1) == 1){
+      amount = Math.round(large_amt*1.01*10)/10 
+    }
+    else {
+      amount = Math.round(large_amt*0.99*10)/10
+    }
+  }
+  
+  //if not beginning (i.e. either the end for that trace or adjustment)
+  else {
+     // if the criterion is true (i.e. if end for that trace)
+      if (getDataMatchingCondition(traceData, 'criterion', true).length != 0){
+        //then choose new number (i.e. call the same calibration function again to choose a new trace i)
+        calibStim()
+      } 
+
+      // if criterion is false
+      else { 
+          // get large amount to be adjusted from last trial
+          var large_amt = traceData[traceData.length - 1].large_amt
+           
+          // if the last two choices are patient
+          if(traceData[traceData.length - 1].choice == 'll' & traceData[traceData.length - 2].choice == 'll'){
+            // decrease large amount by 25% (will have to play around with this to see how fast it converges down)
+            amount = Math.round(large_amt*0.75*10)/10
+          }
+
+          // if the last two choices are impatient
+          else if(traceData[traceData.length - 1].choice == 'ss' & traceData[traceData.length - 2].choice == 'ss'){
+            // increase large amount by 25% (will have to play around with this to see how fast it converges down)
+            amount = Math.round(large_amt*1.25*10)/10
+          }
+
+          // what about the last two aren't consistent? or no response? then keep amount similar
+          else {
+            if (getRandomInt(0, 1) == 1){
+              amount = Math.round(large_amt*1.01*10)/10 
+            }
+            else {
+              amount = Math.round(large_amt*0.99*10)/10
             }
           }
       }
+
+      // check threshold
+      amount = checkThreshold(amount, traces[i])
+
   }
+
+  var delay = jitterDelay(traces[i])
+
+  var output_text = '<div class = "centerbox"><div class = "stim-text"><p style="font-size:100px">$'+amount+'</p><br><p style="font-size:100px">'+delay+ 'days</p></div></div>'
+
+  return output_text
 }
 
 // var calib_stim_block = {
@@ -313,30 +392,29 @@ var calibStim = function(){
 //   return left_x  
 // }
 
-// var checkCriterion = function(data){
+var checkCriterion = function(data){
 
-//   var val_diff = data.large_amt - 20
+  var trace = data.trace //input of this function is a single object for the current trial
 
-//   var criterion = false
+  var traceData = getDataMatchingCondition(jsPsych.data.getData(), 'trace', trace)
 
-//   if (data.later_del == 1 && val_diff <= 1){
-//     criterion = true
-//   } else if (data.later_del == 2 && val_diff <= 1.5){
-//     criterion = true
-//   } else if (data.later_del == 7 && val_diff <= 2){
-//     criterion = true
-//   } else if (data.later_del == 14 && val_diff <= 2){
-//     criterion = true
-//   } else if (data.later_del == 30 && val_diff <= 3){
-//     criterion = true
-//   } else if (data.later_del == 90 && val_diff <= 4){
-//     criterion = true
-//   } else if (data.later_del == 180 && val_diff <= 4){
-//     criterion = true
-//   }
+  var val_diff = data.large_amt - 20
 
-//   return criterion
-// }
+  var criterion = false
+
+  if (trace == 1 && val_diff <= 1){
+    criterion = true
+  } else if (trace == 2 && val_diff <= 1.5){
+    criterion = true
+  } else if ((trace == 7 | trace == 14) && val_diff <= 2){
+    criterion = true
+  } else if (trace == 30 && val_diff <= 3){
+    criterion = true
+  } else if ((trace == 90 | trace == 180) && val_diff <= 4){
+    criterion = true
+  }
+  return criterion
+}
 
 // var calib_response_block = {
 //   type: 'single-stim',
