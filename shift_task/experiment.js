@@ -1,17 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'shift_task'
-  })
-}
-
 function evalAttentionChecks() {
   var check_percent = 1
   if (run_attention_checks) {
@@ -56,7 +45,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -64,7 +53,9 @@ function assessPerformance() {
 			responses_ok = false
 		}
 	})
-	credit_var = (avg_rt > 200) && responses_ok
+	var missed_percent = missed_count/trial_count
+	credit_var = (missed_percent < 0.4 && avg_rt > 200 && responses_ok)
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 var getInstructFeedback = function() {
@@ -79,6 +70,7 @@ var randomDraw = function(lst) {
 
 var getData = function() {
   return {
+    shift_type: recorded_shift_type,
     rewarded_feature: rewarded_feature,
     rewarded_dim: rewarded_dim,
     trials_since_switch: switch_count,
@@ -131,6 +123,15 @@ var getFeedback = function() {
     image = last_trial.stimulus
     feedback_text = 'Respond faster!'
   }
+  var FB = -1
+  if (feedback_text.indexOf('won 1 point') != -1) {
+    FB = 1
+  } else if (feedback_text.indexOf('won 0 point') != -1) {
+    FB = 0
+  }
+  jsPsych.data.addDataToLastTrial({
+    FB: FB
+  })
   return image + '<div class = shift_feedback_box><p class = center-text>' + feedback_text +
     '</p></div>'
 }
@@ -152,6 +153,7 @@ var exp_len = 410
 var practice_len = 65
 var total_points = 0 //tracks points earned during test
 var position_array = ['left', 'middle', 'right']
+var recorded_shift_type = 'stay'
 
 // stim variables
 var stim_att = {
@@ -190,6 +192,7 @@ var num_switches = switch_bounds.length
   /* controls how often the shift is extra-dimensional (across dims) vs intra (across features within a dim) */
 var shift_types = jsPsych.randomization.repeat(['extra', 'extra', 'intra', 'reversal'],
   num_switches / 4)
+//Makes sure reversal isn't first
 while (shift_types[0] == 'reversal') {
   var ran_i = Math.floor(Math.random() * (num_switches - 1)) + 1
   var tmp = shift_types[ran_i]
@@ -242,7 +245,8 @@ var end_block = {
   type: 'poldrack-text',
   timing_response: 180000,
   data: {
-    trial_id: "end"
+    trial_id: "end",
+    exp_id: 'shift_task'
   },
   text: '<div class = centerbox><p class = center-block-text>Finished with this task.</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
@@ -411,11 +415,15 @@ var stim_block = {
   response_ends_trial: true,
   on_finish: function(data) {
     var choice = choices.indexOf(data.key_press)
+    var choice_stim = -1
+    if (choice != -1) {
+      choice_stim = JSON.stringify(stims[choice])
+    }
     jsPsych.data.addDataToLastTrial({
       trial_id: "stim",
       exp_stage: "test",
       stims: JSON.stringify(stims),
-      choice_stim: JSON.stringify(stims[choice]),
+      choice_stim: choice_stim,
       choice_position: position_array[choice]
     })
   }
@@ -431,10 +439,12 @@ var practice_feedback_block = {
   timing_response: 1000,
   timing_post_trial: 500,
   on_finish: function(data) {
-    var FB = 0
+    var FB = -1
     if (data.stimulus.indexOf('won 1 point') != -1) {
-      total_points += 1
       FB = 1
+      total_points += 1
+    } else if (data.stimulus.indexOf('won 0 point') != -1) {
+      FB = 0
     }
     jsPsych.data.addDataToLastTrial({
       trial_id: "feedback",
@@ -444,6 +454,7 @@ var practice_feedback_block = {
     switch_count += 1
     if (switch_count == switch_bound) {
       switch_count = 0
+      recorded_shift_type = shift_type
       if (shift_type == 'extra') {
         last_dim = rewarded_dim
         last_feature = rewarded_feature
@@ -463,6 +474,8 @@ var practice_feedback_block = {
       }
       switch_bound = switch_bounds.shift()
       shift_type = shift_types.shift()
+    } else {
+      recorded_shift_type = 'stay'
     }
     current_trial += 1
   }
@@ -478,9 +491,12 @@ var feedback_block = {
   timing_response: 1000,
   timing_post_trial: 500,
   on_finish: function(data) {
-    var FB = 0
+    var FB = -1
     if (data.stimulus.indexOf('won 1 point') != -1) {
       FB = 1
+      total_points += 1
+    } else if (data.stimulus.indexOf('won 0 point') != -1) {
+      FB = 0
     }
     jsPsych.data.addDataToLastTrial({
       trial_id: "feedback",
@@ -490,7 +506,7 @@ var feedback_block = {
     switch_count += 1
     if (switch_count == switch_bound) {
       switch_count = 0
-      switch_bound = switch_bounds.shift()
+      recorded_shift_type = shift_type
       if (shift_type == 'extra') {
         last_dim = rewarded_dim
         last_feature = rewarded_feature
@@ -508,7 +524,10 @@ var feedback_block = {
         rewarded_dim = last_dim
         rewarded_feature = last_feature
       }
+      switch_bound = switch_bounds.shift()
       shift_type = shift_types.shift()
+    } else {
+      recorded_shift_type = 'stay'
     }
     current_trial += 1
   }

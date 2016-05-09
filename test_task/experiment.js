@@ -1,17 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'test_task'
-  })
-}
-
 function evalAttentionChecks() {
   var check_percent = 1
   if (run_attention_checks) {
@@ -27,6 +16,44 @@ function evalAttentionChecks() {
   return check_percent
 }
 
+function assessPerformance() {
+  /* Function to calculate the "credit_var", which is a boolean used to
+  credit individual experiments in expfactory. 
+   */
+  var experiment_data = jsPsych.data.getTrialsOfType('poldrack-single-stim')
+  var missed_count = 0
+  var trial_count = 0
+  var rt_array = []
+  var rt = 0
+  for (var i = 0; i < experiment_data.length; i++) {
+    trial_count += 1
+    rt = experiment_data[i].rt
+    key = experiment_data[i].key_press
+    if (rt == -1) {
+      missed_count += 1
+    } else {
+      rt_array.push(rt)
+    }
+
+  }
+  //calculate average rt
+  var sum = 0
+  for (var j = 0; j < rt_array.length; j++) {
+    sum += rt_array[j]
+  }
+  var avg_rt = sum / rt_array.length || -1
+  var missed_percent = missed_count/trial_count
+  credit_var = (missed_percent < 0.4 && avg_rt > 200)
+  if (credit_var === true) {
+      performance_var = Math.max(0, 1000 - avg_rt)
+  } else {
+      performance_var = 0
+  }
+
+  jsPsych.data.addDataToLastTrial({"credit_var": credit_var,"performance_var": performance_var})
+}
+
+
 /* ************************************ */
 /* Define experimental variables */
 /* ************************************ */
@@ -39,7 +66,8 @@ var experiment_len = 3
 var gap = 0
 var current_trial = 0
 var stim = '<div class = "shapebox"><div id = "cross"></div></div>'
-
+var credit_var = true
+var performance_var = 0
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -60,6 +88,13 @@ var attention_node = {
   }
 }
 
+var add_data = {
+  type: 'call-function',
+  func: function() {
+    jsPsych.data.addDataToLastTrial({'added_Data?': 'success!'})
+  }
+}
+
 //Set up post task questionnaire
 var post_task_block = {
    type: 'survey-text',
@@ -69,16 +104,21 @@ var post_task_block = {
    questions: ['<p class = center-block-text style = "font-size: 20px">Please summarize what you were asked to do in this task.</p>',
               '<p class = center-block-text style = "font-size: 20px">Do you have any comments about this task?</p>'],
    rows: [15, 15],
-   columns: [60,60]
+   columns: [60,60],
 };
 
 /* define static blocks */
 var end_block = {
   type: 'poldrack-text',
+  data: {
+    trial_id: 'end',
+    exp_id: 'test_task'
+  },
   timing_response: 180000,
   text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: assessPerformance
 }
 
 /* define test block */
@@ -91,7 +131,10 @@ var test_block = {
   },
   choices: [32],
   timing_response: 2000,
-  timing_post_trial: 100
+  timing_post_trial: 100,
+  on_finish: function() {
+    jsPsych.data.addDataToLastTrial({'addingOnTrial': 'added!'})
+  }
 }
 
 /* create experiment definition array */
@@ -99,6 +142,7 @@ var test_task_experiment = [];
 for (var i = 0; i < experiment_len; i++) {
   test_task_experiment.push(test_block);
 }
+test_task_experiment.push(add_data)
 test_task_experiment.push(attention_node)
 test_task_experiment.push(post_task_block)
 test_task_experiment.push(end_block);

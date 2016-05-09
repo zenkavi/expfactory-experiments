@@ -9,7 +9,7 @@ function assessPerformance() {
   var rt_array = []
   var rt = 0
   for (var i = 0; i < experiment_data.length; i++) {
-    if (experiment_data[i].choices != 'none') {
+    if (experiment_data[i].possible_responses != 'none') {
       rt = experiment_data[i].rt
       trial_count += 1
       if (rt == -1) {
@@ -24,20 +24,15 @@ function assessPerformance() {
   for (var j = 0; j < rt_array.length; j++) {
     sum += rt_array[j]
   }
-  var avg_rt = sum / rt_array.length
-  credit_var = (avg_rt > 200)
-}
-
-
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'willingness_to_wait'
-  })
+  var avg_rt = sum / rt_array.length || -1
+	var missed_percent = missed_count/trial_count
+	credit_var = (missed_percent < 0.4 && avg_rt > 200)
+	if (credit_var === true) {
+		performance_var = total_money
+	} else {
+		performance_var = 0
+	}
+  jsPsych.data.addDataToLastTrial({"credit_var": credit_var, "performance_var": performance_var})
 }
 
 function evalAttentionChecks() {
@@ -81,7 +76,9 @@ var getFB = function() {
     token = token_zero
   } else {
     token = token_thirty
-    total_money += 0.30
+    if (exp_stage == 'test') {
+      total_money += 0.30
+    }
   }
   return token +
     '<div class = soldBox><div class = center-text><font color="red">SOLD!</font></div></div>'
@@ -109,10 +106,12 @@ var progress_bar =
   '<div class = wtw_progressBox><div class="meter"> <span style="width: 100%"></span></div></div>'
 var delay = 0
 var practice_delays = [10000, 50000, 5000]
-var block_start_time = new Date();
+var block_start_time = 0;
 var total_money = 0 //in dollars
 var time_limit = 10
 var exp_stage = 'practice'
+var credit_var = true
+var performance_var = 0
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -159,7 +158,8 @@ var welcome_block = {
 var end_block = {
   type: 'poldrack-text',
   data: {
-    trial_id: 'end'
+    trial_id: 'end',
+    exp_id: 'willingness_to_wait'
   },
   text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
@@ -228,6 +228,7 @@ var start_test_block = {
   timing_post_trial: 1000,
   on_finish: function() {
     exp_stage = 'test'
+    block_start_time = new Date();
   }
 };
 

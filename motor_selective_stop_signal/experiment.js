@@ -1,11 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
-
 function evalAttentionChecks() {
 	var check_percent = 1
 	if (run_attention_checks) {
@@ -19,12 +14,6 @@ function evalAttentionChecks() {
 		check_percent = checks_passed / attention_check_trials.length
 	}
 	return check_percent
-}
-
-function addID() {
-	jsPsych.data.addDataToLastTrial({
-		'exp_id': 'motor_selective_stop_signal'
-	})
 }
 
 function assessPerformance() {
@@ -59,7 +48,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -68,6 +57,8 @@ function assessPerformance() {
 		}
 	})
 	credit_var = (avg_rt > 200) && responses_ok
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
+
 }
 
 var randomDraw = function(lst) {
@@ -319,7 +310,8 @@ var end_block = {
 	type: 'poldrack-text',
 	timing_response: 180000,
 	data: {
-		trial_id: "end"
+		trial_id: "end",
+		exp_id: 'motor_selective_stop_signal'
 	},
 	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
 	cont_key: [13],
@@ -383,7 +375,8 @@ var fixation_block = {
 	is_html: true,
 	choices: 'none',
 	data: {
-		trial_id: "fixation"
+		trial_id: "fixation",
+		exp_stage: "test"
 	},
 	timing_post_trial: 0,
 	timing_stim: 500,
@@ -398,7 +391,8 @@ var prompt_fixation_block = {
 	is_html: true,
 	choices: 'none',
 	data: {
-		trial_id: "prompt_fixation"
+		trial_id: "fixation",
+		exp_stage: "practice"
 	},
 	timing_post_trial: 0,
 	timing_stim: 500,
@@ -412,7 +406,8 @@ var practice_feedback_text =
 var practice_feedback_block = {
 	type: 'poldrack-text',
 	data: {
-		trial_id: "feedback"
+		trial_id: "feedback",
+		exp_stage: "practice"
 	},
 	timing_response: 180000,
 	cont_key: [13],

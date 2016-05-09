@@ -12,6 +12,7 @@
                 "static/js/jspsych/poldrack_plugins/jspsych-attention-check.js",
                 "static/js/jspsych/poldrack_plugins/jspsych-poldrack-single-stim.js",
                 "static/js/jspsych/plugins/jspsych-survey-text.js",
+                "static/js/utils/poldrack_utils.js",
                 "experiment.js",
                 "static/css/jspsych.css",
                 "static/css/default_style.css",
@@ -28,6 +29,13 @@
         "reference": "http://www.nature.com/neuro/journal/v18/n5/full/nn.3994.html",
         "publish":"True",
         "experiment_variables": [{
+                                 "name":"performance_var",
+                                 "type":"bonus",
+                                 "datatype": "numeric",
+                                 "range": [0,1000],
+                                 "description":"Money earned during trial. E(bonus) with perfect performance = 300"
+                                  },
+                                  {
                                  "name":"credit_var",
                                  "type":"credit",
                                  "datatype": "boolean",
@@ -36,7 +44,7 @@
         "deployment_variables":{"jspsych_init":
                                         {"fullscreen": true,
                                         "display_element": "getDisplayElement",
-                                        "on_trial_finish": "addID()"}
+                                        "on_trial_finish": "addID('willingness_to_wait')"}
                        }
    }
 ]

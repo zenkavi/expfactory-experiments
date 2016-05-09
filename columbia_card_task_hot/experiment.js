@@ -1,20 +1,9 @@
 /* ************************************ */
 /* Helper Functions                     */
 /* ************************************ */
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
-
 var getInstructFeedback = function() {
 	return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
 		'</p></div>'
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'columbia_card_task_hot'
-  })
 }
 
 function assessPerformance() {
@@ -37,8 +26,10 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
-	credit_var = (avg_rt > 200)
+	var avg_rt = sum / rt_array.length || -1
+	var missed_percent = missed_count/experiment_data.length
+  	credit_var = (missed_percent < 0.4 && avg_rt > 200)
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 function deleteText(input, search_term) {
@@ -547,7 +538,7 @@ var feedback_instruct_block = {
 	type: 'poldrack-text',
 	cont_key: [13],
 	data: {
-		trial: 'instructions'
+		trial_id: 'instruction'
 	},
 	text: getInstructFeedback,
 	timing_post_trial: 0,
@@ -556,7 +547,7 @@ var feedback_instruct_block = {
 /// This ensures that the subject does not read through the instructions too quickly.  If they do it too quickly, then we will go over the loop again.
 var instructions_block = {
   type: 'poldrack-instructions',
-  data: {trial: 'instructions'},
+  data: {trial_id: 'instruction'},
   pages: [
 	'<div class = centerbox><p class = block-text><strong>Introduction and Explanation</strong>'+
 	'<p>-You are now going to participate in a card game.  In this game, you will turn over cards to win or lose points which are worth money.</p>'+
@@ -627,7 +618,8 @@ var instruction_node = {
 var end_block = {
 	type: 'poldrack-text',
 	data: {
-		trial_id: 'end'
+		trial_id: 'end',
+		exp_id: 'columbia_card_task_hot'
 	},
 	text: '<div class = centerbox><p class = center-block-text>Finished with this task.</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
 	cont_key: [13],
@@ -747,6 +739,7 @@ var payoutTrial = {
 		prize2 = randomRoundPointsArray.pop()
 		prize3 = randomRoundPointsArray.pop()
 		performance_var = prize1 + prize2 + prize3
+		jsPsych.data.addDataToLastTrial({"performance_var": performance_var})
 	}
 };
 

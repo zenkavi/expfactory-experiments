@@ -1,11 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
-
 function evalAttentionChecks() {
 	var check_percent = 1
 	if (run_attention_checks) {
@@ -19,12 +14,6 @@ function evalAttentionChecks() {
 		check_percent = checks_passed / attention_check_trials.length
 	}
 	return check_percent
-}
-
-function addID() {
-	jsPsych.data.addDataToLastTrial({
-		'exp_id': 'adaptive_n_back'
-	})
 }
 
 function assessPerformance() {
@@ -55,7 +44,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -64,6 +53,7 @@ function assessPerformance() {
 		}
 	})
 	credit_var = (avg_rt > 200) && responses_ok
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 var getInstructFeedback = function() {
@@ -81,18 +71,19 @@ var record_acc = function(data) {
 	var target_lower = data.target.toLowerCase()
 	var stim_lower = curr_stim.toLowerCase(0)
 	var key = data.key_press
-	if (stim_lower == target_lower && key == 32) {
-		correct = 'correct'
+	if (stim_lower == target_lower && key == 37) {
+		correct = true
 		block_acc += 1
-	} else if (stim_lower != target_lower && key == -1) {
-		correct = 'correct'
+	} else if (stim_lower != target_lower && key == 40) {
+		correct = true
 		block_acc += 1
 	} else {
-		correct = 'incorrect'
+		correct = false
 	}
 	jsPsych.data.addDataToLastTrial({
 		correct: correct,
-		stim: curr_stim
+		stim: curr_stim,
+		trial_num: current_trial
 	})
 	current_trial = current_trial + 1
 };
@@ -141,14 +132,13 @@ var getData = function() {
 		exp_stage: "test",
 		load: delay,
 		target: target,
-		trial_num: current_trial
 	}
 }
 
 var getText = function() {
-	return '<div class = "centerbox"><p class = "block-text">In these next blocks, you should respond when the current letter matches the letter that appeared ' +
+	return '<div class = "centerbox"><p class = "block-text">In these next blocks, you should press the left arrow key when the current letter matches the letter that appeared ' +
 	delay +
-		' trials before.</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>'
+		' trials before. Otherwise press the down arrow key</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>'
 }
 
 /* ************************************ */
@@ -174,7 +164,6 @@ var current_trial = 0
 var target = ""
 var curr_stim = ''
 var stims = [] //hold stims per block
-var gap = 0
 
 /* ************************************ */
 /* Set up jsPsych blocks */
@@ -183,7 +172,6 @@ var gap = 0
 var attention_check_block = {
 	type: 'attention-check',
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: "attention"
 	},
 	timing_response: 180000,
@@ -217,7 +205,6 @@ var feedback_instruct_block = {
 	type: 'poldrack-text',
 	cont_key: [13],
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: 'instruction'
 	},
 	text: getInstructFeedback,
@@ -228,10 +215,9 @@ var feedback_instruct_block = {
 var instructions_block = {
 	type: 'poldrack-instructions',
 	pages: [
-		'<div class = "centerbox"><p class = "block-text">In this experiment you will see a sequence of letters presented one at a time. Your job is to respond by pressing the spacebar when the letter matches the same letter that occured some number of trials before (the number of trials is called the "delay"). The letters will be both lower and upper case. You should ignore the case (so "t" matches "T").</p><p class = block-text>The specific delay you should pay attention to will differ between blocks of trials, and you will be told the delay before starting a block.</p><p class = block-text>For instance, if the delay is 2, you are supposed to respond when the current letter matches the letter that occurred 2 trials ago. If you saw the sequence: g...G...v...T...b...t...b, you would respond on the last "t" and the last "b".</p><p class = block-text>On one block of trials there will be no delay. On this block you will be instructed to respond to the presentation of a specific letter on that trial. For instance, you may have to respond every time you see a "t" or "T".</p></div>'
+		'<div class = "centerbox"><p class = "block-text">In this experiment you will see a sequence of letters presented one at a time. Your job is to respond by pressing the <strong>left arrow key</strong> when the letter matches the same letter that occured some number of trials before (the number of trials is called the "delay"), otherwise you should press the <strong>down arrow key</strong>. The letters will be both lower and upper case. You should ignore the case (so "t" matches "T").</p><p class = block-text>The specific delay you should pay attention to will differ between blocks of trials, and you will be told the delay before starting a block.</p><p class = block-text>For instance, if the delay is 2, you are supposed to press the left arrow key when the current letter matches the letter that occurred 2 trials ago. If you saw the sequence: g...G...v...T...b...t...b, you would press the left arrow key on the last "t" and the last "b" and the down arrow key for every other letter.</p><p class = block-text>On one block of trials there will be no delay. On this block you will be instructed to press the left arrow key to the presentation of a specific letter on that trial. For instance, the specific letter may be "t", in which case you would press the left arrow key to "t" or "T".</p></div>'
 	],
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: 'instruction'
 	},
 	allow_keys: false,
@@ -265,7 +251,8 @@ var end_block = {
 	text: '<div class = "centerbox"><p class = "center-block-text">Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>',
 	cont_key: [13],
 	data: {
-		trial_id: "text"
+		trial_id: "end",
+    	exp_id: 'adaptive_n_back'
 	},
 	timing_response: 180000,
 	timing_post_trial: 0,
@@ -274,11 +261,10 @@ var end_block = {
 
 var start_practice_block = {
 	type: 'poldrack-text',
-	text: '<div class = "centerbox"><p class = "center-block-text">Starting a practice block.</p><p class = "center-block-text">Press <strong>enter</strong> to begin.</p></div>',
+	text: '<div class = centerbox><p class = block-text>Starting practice. During practice, you should press the left arrow key when the current letter matches the letter that appeared 1 trial before. Otherwise press the down arrow key</p><p class = center-block-text>You will receive feedback about whether you were correct or not during practice. There will be no feedback during the main experiment. Press <strong>enter</strong> to begin.</p></div>',
 	cont_key: [13],
 	data: {
-		exp_id: "adaptive_n_back",
-		trial_id: "text"
+		trial_id: "instruction"
 	},
 	timing_response: 180000,
 	timing_post_trial: 1000
@@ -288,7 +274,6 @@ var update_delay_block = {
 	type: 'call-function',
 	func: update_delay,
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: "update_delay"
 	},
 	timing_post_trial: 0
@@ -298,7 +283,6 @@ var update_target_block = {
 	type: 'call-function',
 	func: update_target,
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: "update_target"
 	},
 	timing_post_trial: 0
@@ -306,16 +290,14 @@ var update_target_block = {
 
 var start_control_block = {
 	type: 'poldrack-text',
-	text: '<div class = "centerbox"><p class = "block-text">In this block you do not have to match letters to previous letters. Instead, press the spacebar everytime you see a "t" or "T".</p><p class = "center-block-text">Press <strong>enter</strong> to begin.</p></div>',
+	text: '<div class = centerbox><p class = block-text>In this block you do not have to match letters to previous letters. Instead, press the left arrow key everytime you see a "t" or "T" and the down arrow key for all other letters.</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>',
 	cont_key: [13],
 	data: {
-		exp_id: "adaptive_n_back",
-		trial_id: "text"
+		trial_id: "instruction"
 	},
 	timing_response: 180000,
 	timing_post_trial: 2000,
 	on_finish: function() {
-		target = 't'
 		target_trials = jsPsych.randomization.repeat(['target','0', '0'], base_num_trials/3).slice(0,base_num_trials)
 	}
 };
@@ -323,7 +305,6 @@ var start_control_block = {
 var start_adaptive_block = {
 	type: 'poldrack-text',
 	data: {
-		exp_id: "adaptive_n_back",
 		trial_id: "delay_text"
 	},
 	text: getText,
@@ -353,7 +334,7 @@ var adaptive_block = {
 	is_html: true,
 	stimulus: getStim,
 	data: getData,
-	choices: [32],
+	choices: [37,40],
 	timing_stim: 500,
 	timing_response: 2000,
 	timing_post_trial: 0,
@@ -361,6 +342,43 @@ var adaptive_block = {
 		record_acc(data)
 	}
 };
+
+//Setup 1-back practice
+practice_trials = []
+for (var i = 0; i < (base_num_trials + 1); i++) {
+	var stim = randomDraw(letters)
+	stims.push(stim)
+	if (i >= 1) {
+		target = stims[i - 1]
+	}
+	if (stim == target) { 
+		correct_response = 37
+	} else {
+		correct_response = 40
+	}
+	var practice_block = {
+		type: 'poldrack-categorize',
+		is_html: true,
+		stimulus: '<div class = centerbox><div class = center-text>' + stim + '</div></div>',
+		key_answer: correct_response,
+		data: {
+			trial_id: "stim",
+			exp_stage: "practice",
+			stim: stim,
+			target: target
+		},
+		correct_text: '<div class = centerbox><div style="color:green;font-size:60px"; class = center-text>Correct!</div></div>',
+		incorrect_text: '<div class = centerbox><div style="color:red;font-size:60px"; class = center-text>Incorrect</div></div>',
+		timeout_message: '<div class = centerbox><div style="font-size:60px" class = center-text>Respond Faster!</div></div>',
+		timing_feedback_duration: 500,
+		show_stim_with_feedback: false,
+		choices: [37,40],
+		timing_stim: 500,
+		timing_response: 2000,
+		timing_post_trial: 500
+	};
+	practice_trials.push(practice_block)
+}
 
 //Define control (0-back) block
 var control_trials = []
@@ -373,10 +391,9 @@ for (var i = 0; i < base_num_trials; i++) {
 			trial_id: "stim",
 			exp_stage: "control",
 			load: 0,
-			target: target,
-			trial_num: current_trial
+			target: 't',
 		},
-		choices: [32],
+		choices: [37,40],
 		timing_stim: 500,
 		timing_response: 2000,
 		timing_post_trial: 0,
@@ -403,6 +420,8 @@ var adaptive_test_node = {
 //Set up experiment
 var adaptive_n_back_experiment = []
 adaptive_n_back_experiment.push(instruction_node);
+adaptive_n_back_experiment.push(start_practice_block)
+adaptive_n_back_experiment = adaptive_n_back_experiment.concat(practice_trials)
 
 if (control_before === 1) {
 	adaptive_n_back_experiment.push(start_control_block)

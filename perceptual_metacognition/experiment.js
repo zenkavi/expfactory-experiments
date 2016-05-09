@@ -1,18 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-	jsPsych.data.addDataToLastTrial({
-		'exp_id': 'perceptual_metacognition'
-	})
-}
-
 function assessPerformance() {
 	/* Function to calculate the "credit_var", which is a boolean used to
 	credit individual experiments in expfactory. */
@@ -43,7 +31,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -51,7 +39,9 @@ function assessPerformance() {
 			responses_ok = false
 		}
 	})
-	credit_var = (avg_rt > 200) && responses_ok
+	var missed_percent = missed_count/trial_count
+	credit_var = (missed_percent < 0.4 && avg_rt > 200 && responses_ok)
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 var getInstructFeedback = function() {
@@ -388,7 +378,8 @@ var post_task_block = {
 var end_block = {
 	type: 'poldrack-text',
 	data: {
-		trial_id: "end"
+		trial_id: "end",
+		exp_id: 'perceptual_metacognition'
 	},
 	timing_response: 180000,
 	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',

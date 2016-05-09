@@ -1,11 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
-
 function evalAttentionChecks() {
 	var check_percent = 1
 	if (run_attention_checks) {
@@ -19,12 +14,6 @@ function evalAttentionChecks() {
 		check_percent = checks_passed / attention_check_trials.length
 	}
 	return check_percent
-}
-
-function addID() {
-	jsPsych.data.addDataToLastTrial({
-		'exp_id': 'keep_track'
-	})
 }
 
 var randomDraw = function(lst) {
@@ -63,6 +52,7 @@ var blocks = []
 var targets = []
 var practice_block = []
 var practice_targets = []
+var last_targets = {}
 
 /* Draw 2 or 3 exemplars from each of six categories totalling 15 exemplars for each block. Start
 with a practice block (difficulty = 3). Then present 3 test blocks for each difficulty level, where each difficulty level has a different number
@@ -201,7 +191,8 @@ var end_block = {
 	type: 'poldrack-text',
 	timing_response: 180000,
 	data: {
-		trial_id: 'end'
+		trial_id: 'end',
+		exp_id: 'keep_track'
 	},
 	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
 	cont_key: [13],
@@ -227,7 +218,10 @@ var start_test_block = {
 	},
 	text: '<div class = centerbox><p class = center-block-text>Starting a test block.</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>',
 	cont_key: [13],
-	timing_post_trial: 1000
+	timing_post_trial: 1000,
+	on_finish: function() {
+		last_targets = {}
+	}
 };
 
 
@@ -274,13 +268,13 @@ keep_track_experiment.push(prompt_block)
 keep_track_experiment.push(wait_block)
 for (i = 0; i < block.length; i++) {
 	stim = '<div class = centerbox><div class = keep-track-text>' + block[i][1] + '</div></div>'
-	tempStim = block[i][1]
 	data = {
-		trial_id: block[i][0],
+		trial_id: 'stim',
+		category: block[i][0],
 		exp_stage: "practice",
 		load: target.length,
 		targets: target,
-		stim: tempStim
+		stim: block[i][1]
 	}
 	var track_block = {
 		type: 'poldrack-single-stim',
@@ -292,6 +286,11 @@ for (i = 0; i < block.length; i++) {
 		timing_stim: 1500,
 		prompt: prompt,
 		timing_post_trial: 0,
+		on_finish: function(data) {
+			if ($.inArray(data.category, data.targets) != -1) {
+				last_targets[data.category] = data.stim
+			}
+		}
 	}
 	keep_track_experiment.push(track_block)
 }
@@ -307,6 +306,9 @@ var response_block = {
 		exp_stage: "practice",
 		load: target.length,
 		targets: target
+	},
+	on_finish: function() {
+		jsPsych.data.addDataToLastTrial({'correct_responses': last_targets})
 	}
 }
 keep_track_experiment.push(response_block)
@@ -355,13 +357,13 @@ for (b = 0; b < blocks.length; b++) {
 	keep_track_experiment.push(wait_block)
 	for (i = 0; i < block.length; i++) {
 		stim = '<div class = centerbox><div class = keep-track-text>' + block[i][1] + '</div></div>'
-		tempStim = block[i][1]
 		data = {
-			trial_id: block[i][0],
+			trial_id: 'stim',
+			category: block[i][0],
 			exp_stage: "test",
 			load: target.length,
 			targets: target,
-			stim: tempStim
+			stim: block[i][1]
 		}
 		var track_block = {
 			type: 'poldrack-single-stim',
@@ -373,6 +375,11 @@ for (b = 0; b < blocks.length; b++) {
 			timing_stim: 1500,
 			prompt: prompt,
 			timing_post_trial: 0,
+			on_finish: function(data) {
+				if ($.inArray(data.category, data.targets) != -1) {
+					last_targets[data.category] = data.stim
+				}
+			}
 		}
 		keep_track_experiment.push(track_block)
 	}
@@ -380,15 +387,17 @@ for (b = 0; b < blocks.length; b++) {
 		type: 'survey-text',
 		questions: [
 			[
-				'What was the last word in each of the target categories? Please separate your words with a space'
+				'<p class = center-block-text>What was the last word in each of the target categories? Please separate your words with a space</p>'
 			]
 		],
 		data: {
 			trial_id: 'response',
 			exp_stage: 'test',
-			target_length: target.length,
 			load: target.length,
 			targets: target
+		},
+		on_finish: function() {
+			jsPsych.data.addDataToLastTrial({'correct_responses': last_targets})
 		}
 	}
 	keep_track_experiment.push(response_block)

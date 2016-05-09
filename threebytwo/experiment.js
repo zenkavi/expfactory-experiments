@@ -1,17 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'threebytwo'
-  })
-}
-
 function evalAttentionChecks() {
   var check_percent = 1
   if (run_attention_checks) {
@@ -44,14 +33,16 @@ function assessPerformance() {
     choice_counts[choices[k]] = 0
   }
 	for (var i = 0; i < experiment_data.length; i++) {
-		trial_count += 1
-		rt = experiment_data[i].rt
-		key = experiment_data[i].key_press
-		choice_counts[key] += 1
-		if (rt == -1) {
-			missed_count += 1
-		} else {
-			rt_array.push(rt)
+		if (experiment_data[i].possible_responses != 'none') {
+			trial_count += 1
+			rt = experiment_data[i].rt
+			key = experiment_data[i].key_press
+			choice_counts[key] += 1
+			if (rt == -1) {
+				missed_count += 1
+			} else {
+				rt_array.push(rt)
+			}
 		}
 
 	}
@@ -60,7 +51,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -68,7 +59,9 @@ function assessPerformance() {
 			responses_ok = false
 		}
 	})
-	credit_var = (avg_rt > 200) && responses_ok
+	var missed_percent = missed_count/trial_count
+	credit_var = (missed_percent < 0.4 && avg_rt > 200 && responses_ok)
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 var randomDraw = function(lst) {
@@ -391,7 +384,8 @@ var instruction_node = {
 var end_block = {
   type: 'poldrack-text',
   data: {
-    trial_id: "end"
+    trial_id: "end",
+    exp_id: 'threebytwo'
   },
   text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
@@ -533,7 +527,7 @@ var gap_block = {
 var threebytwo_experiment = [];
 threebytwo_experiment.push(instruction_node);
 threebytwo_experiment.push(start_practice_block);
-for (var i = 0; i < practiceStims.length; i++) {
+for (var i = 0; i < practice_length; i++) {
   threebytwo_experiment.push(setStims_block)
   threebytwo_experiment.push(fixation_block)
   threebytwo_experiment.push(cue_block);
@@ -542,7 +536,7 @@ for (var i = 0; i < practiceStims.length; i++) {
 }
 threebytwo_experiment.push(attention_node)
 threebytwo_experiment.push(start_test_block)
-for (var i = 0; i < stims.length; i++) {
+for (var i = 0; i < test_length; i++) {
   threebytwo_experiment.push(setStims_block)
   threebytwo_experiment.push(fixation_block)
   threebytwo_experiment.push(cue_block);

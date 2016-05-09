@@ -1,17 +1,6 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-  $('<div class = display_stage_background></div>').appendTo('body')
-  return $('<div class = display_stage></div>').appendTo('body')
-}
-
-function addID() {
-  jsPsych.data.addDataToLastTrial({
-    'exp_id': 'stim_selective_stop_signal'
-  })
-}
-
 function evalAttentionChecks() {
   var check_percent = 1
   if (run_attention_checks) {
@@ -60,7 +49,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -69,6 +58,7 @@ function assessPerformance() {
 		}
 	})
 	credit_var = (avg_rt > 200) && responses_ok
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
 var randomDraw = function(lst) {
@@ -326,7 +316,8 @@ var end_block = {
   type: 'poldrack-text',
   timing_response: 180000,
   data: {
-    trial_id: "end"
+    trial_id: "end",
+    exp_id: 'stim_selective_stop_signal'
   },
   text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
@@ -422,7 +413,8 @@ var practice_feedback_text =
 var practice_feedback_block = {
   type: 'poldrack-text',
   data: {
-    trial_id: "practice_feedback"
+    trial_id: "feedback",
+    exp_stage: "practice"
   },
   timing_response: 180000,
   cont_key: [13],
@@ -432,7 +424,8 @@ var practice_feedback_block = {
 var test_feedback_block = {
   type: 'poldrack-text',
   data: {
-    trial_id: "test_feedback"
+    trial_id: "feedback",
+    exp_stage: "test"
   },
   timing_response: 120000,
   cont_key: [13],

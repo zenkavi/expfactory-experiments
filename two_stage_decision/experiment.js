@@ -1,16 +1,7 @@
 /* ************************************ */
 /* Define helper functions */
 /* ************************************ */
-function getDisplayElement() {
-	$('<div class = display_stage_background></div>').appendTo('body')
-	return $('<div class = display_stage></div>').appendTo('body')
-}
 
-function addID() {
-	jsPsych.data.addDataToLastTrial({
-		exp_id: 'two_stage_decision'
-	})
-}
 
 var getInstructFeedback = function() {
 	return '<div class = centerbox><p class = center-block-text>' + feedback_instruct_text +
@@ -32,14 +23,16 @@ function assessPerformance() {
 		choice_counts[choices[k]] = 0
 	}
 	for (var i = 0; i < experiment_data.length; i++) {
-		trial_count += 1
-		rt = experiment_data[i].rt
-		key = experiment_data[i].key_press
-		choice_counts[key] += 1
-		if (rt == -1) {
-			missed_count += 1
-		} else {
-			rt_array.push(rt)
+		if (experiment_data[i].possible_responses != 'none') {
+			trial_count += 1
+			rt = experiment_data[i].rt
+			key = experiment_data[i].key_press
+			choice_counts[key] += 1
+			if (rt == -1) {
+				missed_count += 1
+			} else {
+				rt_array.push(rt)
+			}
 		}
 	}
 	//calculate average rt
@@ -47,7 +40,7 @@ function assessPerformance() {
 	for (var j = 0; j < rt_array.length; j++) {
 		sum += rt_array[j]
 	}
-	var avg_rt = sum / rt_array.length
+	var avg_rt = sum / rt_array.length || -1
 		//calculate whether response distribution is okay
 	var responses_ok = true
 	Object.keys(choice_counts).forEach(function(key, index) {
@@ -55,8 +48,14 @@ function assessPerformance() {
 			responses_ok = false
 		}
 	})
-	credit_var = (avg_rt > 200) && responses_ok
-	performance_var = total_score
+	var missed_percent = missed_count/trial_count
+	credit_var = (missed_percent < 0.4 && avg_rt > 200 && responses_ok)
+	if (credit_var === true) {
+	  performance_var = total_score
+	} else {
+	  performance_var = 0
+	}
+	jsPsych.data.addDataToLastTrial({"credit_var": credit_var, "performance_var": performance_var})
 }
 
 function evalAttentionChecks() {
@@ -210,10 +209,7 @@ var get_first_selected = function() {
 		first_selected = stim_ids[choice]
 		var first_notselected = stim_ids[1 - choice]
 		jsPsych.data.addDataToLastTrial({
-			stim_selected: first_selected,
-			stim_order: stim_ids,
-			stage: 0,
-			trial_num: current_trial
+			stim_selected: first_selected
 		})
 		return "<div class = 'selected " + stim_side[choice] + "' style='background:" + curr_colors[0] +
 			"; '>" +
@@ -224,10 +220,7 @@ var get_first_selected = function() {
 	} else {
 		first_selected = -1
 		jsPsych.data.addDataToLastTrial({
-			stim_selected: first_selected,
-			stim_order: stim_ids,
-			stage: 0,
-			trial_num: current_trial
+			stim_selected: first_selected
 		})
 	}
 }
@@ -272,11 +265,7 @@ var get_second_selected = function() {
 		second_selected = stim_ids[choice]
 		var second_notselected = stim_ids[1 - choice]
 		jsPsych.data.addDataToLastTrial({
-			stim_selected: second_selected,
-			stim_order: stim_ids,
-			stage: stage + 1,
-			stage_transition: transition,
-			trial_num: current_trial
+			stim_selected: second_selected
 		})
 		return "<div class = '" + stim_side[choice] + " selected' style='background:" + curr_colors[
 				stage + 1] + "; '>" +
@@ -287,11 +276,7 @@ var get_second_selected = function() {
 	} else {
 		second_selected = -1
 		jsPsych.data.addDataToLastTrial({
-			stim_selected: second_selected,
-			stim_order: stim_ids,
-			stage: stage + 1,
-			stage_transition: transition,
-			trial_num: current_trial
+			stim_selected: second_selected
 		})
 	}
 	
@@ -371,6 +356,7 @@ var second_selected = -1 //Tracks the ID of the selected fs stimulus
 var FB_on = 1 //tracks whether FB should be displayed on this trial
 var FB = -1 //tracks FB value
 var stage = 0 //stage is used to track which second stage was shown, 0 or 1
+var transition = ''
 var FB_matrix = initialize_FB_matrix() //tracks the reward probabilities for the four final stimulus
 var exp_stage = 'practice'
 
@@ -540,7 +526,8 @@ var second_instructions_block = {
 var end_block = {
 	type: 'poldrack-text',
 	data: {
-		trial_id: 'end'
+		trial_id: 'end',
+    	exp_id: 'two_stage_decision'
 	},
 	text: '<div class = centerbox><p class = center-block-text>Thanks for completing this task!</p><p class = center-block-text>Press <strong>enter</strong> to continue.</p></div>',
 	cont_key: [13],
@@ -631,7 +618,10 @@ var first_stage = {
 	},
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
-			exp_stage: exp_stage
+			exp_stage: exp_stage,
+			trial_num: current_trial,
+			stim_order: stim_ids,
+			stage: 0
 		})
 	}
 }
@@ -668,7 +658,11 @@ var second_stage = {
 	timing_post_trial: 0,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
-			exp_stage: exp_stage
+			exp_stage: exp_stage,
+			trial_num: current_trial,
+			stim_order: stim_ids,
+			stage: stage + 1,
+			stage_transition: transition
 		})
 	}
 }
