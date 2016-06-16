@@ -66,8 +66,8 @@ var getStim = function() {
     gonogo_choice = -1
   }
   //update data
-  curr_data.gonogo_stim = border_i
-  curr_data.choice_stim = number_i
+  curr_data.gonogo_stim = borders[border_i][1]
+  curr_data.choice_stim = inners[number_i]
   curr_data.gonogo_correct_response = gonogo_choice
   curr_data.choice_correct_response = [74, 76][number_i]
   return [stim, stim2]
@@ -163,17 +163,14 @@ var instructTimeThresh = 0 ///in seconds
 var credit_var = true
 
 // task specific variables
-var practice_len = 20
+var practice_len = 32
 var exp_len = 200
 var current_trial = 0
 var choices = [74, 75, 76]
-var practice_ISIs = jsPsych.randomization.repeat([5, 50, 100, 150, 200, 300, 400, 500, 700],
-  exp_len / 9)
-var ISIs = practice_ISIs.concat(jsPsych.randomization.repeat([5, 50, 100, 150, 200, 300, 400, 500,
-  700
-], exp_len / 9))
+var practice_ISIs = jsPsych.randomization.repeat([50, 150, 300, 800],
+  exp_len / 4)
+var ISIs = practice_ISIs.concat(jsPsych.randomization.repeat([50, 150, 300, 800], exp_len / 4))
 var curr_data = {
-    trial_id: '',
     ISI: '',
     gonogo_stim: '',
     choice_stim: '',

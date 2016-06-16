@@ -56,8 +56,8 @@ function assessPerformance() {
 	jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
 }
 
-var post_trial_gap = function() {
-  gap = Math.floor(Math.random() * 500) + 500
+var get_response_time = function() {
+  gap = 750 + Math.floor(Math.random() * 500) + 250
   return gap;
 }
 
@@ -101,14 +101,17 @@ var instructTimeThresh = 0 ///in seconds
 var credit_var = true
 
 // task specific variables
-var correct_responses = jsPsych.randomization.repeat([
-  ['go', 32, 'respond by pressing the spacebar as quickly as possible'],
-  ['nogo', -1, 'not respond']
-], 1)
+var num_go_stim = 9 //per one no-go stim
+var correct_responses = [
+  ['go', 32],
+  ['nogo', -1]
+]
+
+var stims = jsPsych.randomization.shuffle([["orange", "stim1"],["blue","stim2"]])
 var gap = 0
 var current_trial = 0
 var practice_stimuli = [{
-  stimulus: '<div class = centerbox><div  id = "stim1"></div></div>',
+  stimulus: '<div class = centerbox><div  id = ' + stims[0][1] + '></div></div>',
   data: {
     correct_response: correct_responses[0][1],
     condition: correct_responses[0][0],
@@ -116,7 +119,7 @@ var practice_stimuli = [{
   },
   key_answer: correct_responses[0][1]
 }, {
-  stimulus: '<div class = centerbox><div id = "stim2"></div></div>',
+  stimulus: '<div class = centerbox><div id = ' + stims[1][1] + '></div></div>',
   data: {
     correct_response: correct_responses[1][1],
     condition: correct_responses[1][0],
@@ -128,14 +131,7 @@ var practice_stimuli = [{
 
 //set up block stim. test_stim_responses indexed by [block][stim][type]
 var test_stimuli_block = [{
-  stimulus: '<div class = centerbox><div  id = "stim1"></div></div>',
-  data: {
-    correct_response: correct_responses[0][1],
-    condition: correct_responses[0][0],
-    trial_id: 'test_block'
-  }
-}, {
-  stimulus: '<div class = centerbox><div id = "stim2"></div></div>',
+  stimulus: '<div class = centerbox><div id = ' + stims[1][1] + '></div></div>',
   data: {
     correct_response: correct_responses[1][1],
     condition: correct_responses[1][0],
@@ -143,10 +139,19 @@ var test_stimuli_block = [{
   }
 }];
 
-
+for (var i = 0; i < num_go_stim; i++) {
+  test_stimuli_block.push({
+    stimulus: '<div class = centerbox><div  id = ' + stims[0][1] + '></div></div>',
+    data: {
+      correct_response: correct_responses[0][1],
+      condition: correct_responses[0][0],
+      trial_id: 'test_block'
+    }
+  })
+}
 
 var practice_trials = jsPsych.randomization.repeat(practice_stimuli, 5); 
-var test_trials = jsPsych.randomization.repeat(test_stimuli_block, 50);   
+var test_trials = jsPsych.randomization.repeat(test_stimuli_block, 35);   
 
 
 
@@ -185,7 +190,7 @@ var post_task_block = {
 
 /* define static blocks */
 var feedback_instruct_text =
-  'Welcome to the experiment. This task will take around 7 minutes. Press <strong>enter</strong> to begin.'
+  'Welcome to the experiment. This task will take around 10 minutes. Press <strong>enter</strong> to begin.'
 var feedback_instruct_block = {
   type: 'poldrack-text',
   cont_key: [13],
@@ -203,11 +208,7 @@ var instructions_block = {
     trial_id: "instruction"
   },
   pages: [
-    '<div class = centerbox><p class = block-text>In this experiment blue and orange squares will appear on the screen. You will be told to respond to one of the colored squares by pressing the spacebar. You should only respond to this color and withhold any response to the other color.</p><p class = block-text>If you see the <font color="orange">orange</font> square you should <strong>' +
-    correct_responses[0][2] +
-    '</strong>. If you see the <font color="blue">blue</font> square you should <strong>' +
-    correct_responses[1][2] +
-    '</strong>.</p><p class = block-text>We will begin with practice. You will get feedback telling you if you were correct.</p></div>'
+    '<div class = centerbox><p class = block-text>In this experiment blue and orange squares will appear on the screen. You will be told to respond to one of the colored squares by pressing the spacebar. You should only respond to this color and withhold any response to the other color.</p><p class = block-text>If you see the <font color="' + stims[0][0] + '">' + stims[0][0] + '</font> square you should <strong> respond by pressing the spacebar as quickly as possible</strong>. If you see the <font color="' + stims[1][0] + '">' + stims[1][0] + '</font> square you should <strong> not respond</strong>.</p><p class = block-text>We will begin with practice. You will get feedback telling you if you were correct.</p></div>'
   ],
   allow_keys: false,
   show_clickable_nav: true,
@@ -255,11 +256,7 @@ var start_test_block = {
   data: {
     trial_id: "test_intro"
   },
-  text: '<div class = centerbox><p class = block-text>Practice is over, we will now begin the experiment. You will no longer get feedback about your responses.</p><p class = block-text>Remember, if you see the <font color="orange">orange</font> square you should <strong>' +
-    correct_responses[0][2] +
-    '</strong>. If you see the <font color="blue">blue</font> square you should <strong>' +
-    correct_responses[1][2] +
-    '</strong>. Press <strong>enter</strong> to begin.</p></div>',
+  text: '<div class = centerbox><p class = block-text>Practice is over, we will now begin the experiment. You will no longer get feedback about your responses.</p><p class = block-text>Remember, if you see the <font color="' + stims[0][0] + '">' + stims[0][0] + '</font> square you should <strong> respond by pressing the spacebar as quickly as possible</strong>. If you see the <font color="' + stims[1][0] + '">' + stims[1][0] + '</font> square you should <strong> not respond</strong>. Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
   timing_post_trial: 1000
 };
@@ -289,11 +286,11 @@ var practice_block = {
   incorrect_text: '<div class = centerbox><div style="color:red"; class = center-text>Incorrect</div></div>',
   timeout_message: getFeedback,
   choices: [32],
-  timing_response: 2000,
-  timing_stim: 2000,
+  timing_response: get_response_time,
+  timing_stim: 750,
   timing_feedback_duration: 1000,
   show_stim_with_feedback: false,
-  timing_post_trial: post_trial_gap,
+  timing_post_trial: 250,
   on_finish: appendData
 }
 
@@ -307,12 +304,11 @@ var test_block = {
   },
   is_html: true,
   choices: [32],
-  timing_response: 2000,
-  timing_post_trial: post_trial_gap,
+  timing_stim: 750,
+  timing_response: get_response_time,
+  timing_post_trial: 0,
   on_finish: appendData
 };
-
-
 
 /* create experiment definition array */
 var go_nogo_experiment = [];

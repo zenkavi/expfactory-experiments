@@ -60,8 +60,8 @@ var getStim = function() {
     ' </img></div></div><div class = prp_centerbox><div class = "center-text">' +
     inners[number_i] + '</div></div>'
   //update data
-  curr_data.choice1_stim = border_i
-  curr_data.choice2_stim = number_i
+  curr_data.choice1_stim = borders[border_i][1]
+  curr_data.choice2_stim = inners[number_i]
   curr_data.choice1_correct_response = choices1[border_i]
   curr_data.choice2_correct_response = choices2[number_i]
   return [stim, stim2]
@@ -72,10 +72,11 @@ var getISI = function() {
     curr_data.ISI = ISI
     return [ISI, 2000 - ISI]
   }
-  /*
-  In this task the participant can make two responses - one to a go/nogo stim and one to a 2AFC task. If only one response is made
-  and it is one of the 2AFC responses, the person is assumed to have "no-goed" to the go/nogo stim.
-  */
+  
+/*
+In this task the participant can make two responses - one to a go/nogo stim and one to a 2AFC task. If only one response is made
+and it is one of the 2AFC responses, the person is assumed to have "no-goed" to the go/nogo stim.
+*/
 var getFB = function() {
   var data = jsPsych.data.getLastTrialData()
   var keys = JSON.parse(data.key_presses)
@@ -146,19 +147,16 @@ var instructTimeThresh = 0 ///in seconds
 var credit_var = true
 
 // task specific variables
-var practice_len = 20
+var practice_len = 32
 var exp_len = 200
 var current_trial = 0
 var choices1 = [90,88]
 var choices2 = [78,77]
 var choices = choices1.concat(choices2)
-var practice_ISIs = jsPsych.randomization.repeat([5, 50, 100, 150, 200, 300, 400, 500, 700],
-  exp_len / 9)
-var ISIs = practice_ISIs.concat(jsPsych.randomization.repeat([5, 50, 100, 150, 200, 300, 400, 500,
-  700
-], exp_len / 9))
+var practice_ISIs = jsPsych.randomization.repeat([50, 150, 300, 800],
+  exp_len / 4)
+var ISIs = practice_ISIs.concat(jsPsych.randomization.repeat([50, 150, 300, 800], exp_len / 4))
 var curr_data = {
-    trial_id: '',
     ISI: '',
     choice1_stim: '',
     choice2_stim: '',

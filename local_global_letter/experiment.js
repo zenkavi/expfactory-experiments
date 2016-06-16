@@ -119,17 +119,6 @@ var getInstructFeedback = function() {
       '</p></div>'
   }
   
-var appendTestData = function(){
-	global_trial = jsPsych.progress().current_trial_global
-	subjectResponse = jsPsych.data.getDataByTrialIndex(global_trial).key_press
-	correctResponse = jsPsych.data.getDataByTrialIndex(global_trial).correct_response
-	
-	if(subjectResponse == correctResponse){
-	jsPsych.data.addDataToLastTrial({correct: 'TRUE'})
-	} else if(subjectResponse != correctResponse){
-	jsPsych.data.addDataToLastTrial({correct: 'FALSE'})
-	}
-}
 
   /* ************************************ */
   /* Define experimental variables */
@@ -142,15 +131,17 @@ var instructTimeThresh = 0 ///in seconds
 var credit_var = true
 
 // task specific variables
+var current_trial = 0
 var choices = [72, 83]
 var task_colors = jsPsych.randomization.shuffle(['blue', 'black'])
 var global_shapes = ['s','h', 'o']
 var local_shapes = ['s','h','o']
 var path = '/static/experiments/local_global_letter/images/'
-prefix = '<div class = centerbox><img src = "'
-postfix = '"</img></div>'
-stim = []
-data = []
+var prefix = '<div class = centerbox><img src = "'
+var postfix = '"</img></div>'
+var stim = []
+var data = []
+var images = []
 for (c = 0; c < task_colors.length; c++) {
   if (c === 0) {
     condition = 'global'
@@ -165,6 +156,8 @@ for (c = 0; c < task_colors.length; c++) {
     for (l = 0; l < local_shape_length; l++) {
       stim.push(prefix + path + task_colors[c] + '_' + global_shapes[g] + '_of_' + local_shapes[l] +
         '.png' + postfix)
+      images.push(path + task_colors[c] + '_' + global_shapes[g] + '_of_' + local_shapes[l] +
+        '.png')
       data.push({
         condition: condition,
         global_shape: global_shapes[g],
@@ -174,6 +167,7 @@ for (c = 0; c < task_colors.length; c++) {
   }
 }
 
+jsPsych.pluginAPI.preloadImages(images)
 //Set up experiment stimulus order
 var practice_trials = makeTrialList(36, stim, data)  //36
 for (i = 0; i < practice_trials.length; i++) {
@@ -253,7 +247,7 @@ var instructions_block = {
     '<div class = centerbox><p class = block-text>Your task is to indicate whether the larger or smaller letters is an "H" or "S", depending on the color. If the letter is ' +
     task_colors[0] + ' indicate whether the larger letter is an "H" or "S". If the letter is ' +
     task_colors[1] +
-    ' indicate whether the smallerletter is an "H" or "S".</p><p class = block-text>Use the "H" or "S" keys to indicate the letter.</p></div>',
+    ' indicate whether the smaller letter is an "H" or "S".</p><p class = block-text>Use the "H" or "S" keys to indicate the letter.</p></div>',
     '<div class = centerbox><p class = block-text>For instance, for the letter below you would press "S" because it is ' +
     task_colors[1] +
     ' which means you should respond based on the smaller shapes. If the shape was instead ' +
@@ -295,7 +289,7 @@ var start_practice_block = {
   data: {
     trial_id: "practice_intro"
   },
-  text: '<div class = centerbox><p class = center-block-text>We will start with some practice. Press <strong>enter</strong> to begin.</p></div>',
+  text: '<div class = centerbox><p class = center-block-text>We will start with some practice. During practice you will get feedback about whether you responded correctly. You will not get feedback during the rest of the experiment.</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
   timing_post_trial: 1000
 };
@@ -306,9 +300,15 @@ var start_test_block = {
   data: {
     trial_id: "test_intro"
   },
-  text: '<div class = centerbox><p class = center-block-text>We will now start the test. Press <strong>enter</strong> to begin.</p></div>',
+  text: '<div class = centerbox><p class = center-block-text>We will now start the test. Remember, if the letter is ' +
+    task_colors[0] + ' indicate whether the larger letter is an "H" or "S". If the letter is ' +
+    task_colors[1] +
+    ' indicate whether the smaller letter is an "H" or "S".</p><p class = center-block-text>Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
-  timing_post_trial: 1000
+  timing_post_trial: 1000,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
 /* define practice block */
@@ -327,7 +327,13 @@ var practice_block = {
   timing_feedback_duration: 1000,
   show_stim_with_feedback: false,
   timing_response: 2000,
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function(data) {
+  	jsPsych.data.addDataToLastTrial({
+  		trial_num: current_trial
+  	})
+  	current_trial += 1
+  }
 }
 
 /* define test block */
@@ -341,9 +347,18 @@ var test_block = {
   is_html: true,
   choices: choices,
   timing_post_trial: 500,
-  response_ends_trial: true,
   timing_response: 2000,
-  on_finish: appendTestData,
+  on_finish: function(data) {
+  	correct = false
+    if (data.key_press === data.correct_response) {
+      correct = true
+    }
+  	jsPsych.data.addDataToLastTrial({
+  		correct: correct,
+  		trial_num: current_trial
+  	})
+  	current_trial += 1
+  }
 };
 
 /* create experiment definition array */

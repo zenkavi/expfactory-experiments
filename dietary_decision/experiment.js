@@ -16,6 +16,36 @@ function evalAttentionChecks() {
   return check_percent
 }
 
+function assessPerformance() {
+  /* Function to calculate the "credit_var", which is a boolean used to
+  credit individual experiments in expfactory.
+   */
+  var experiment_data = jsPsych.data.getTrialsOfType('single-stim-button');
+  var missed_count = 0;
+  var trial_count = 0;
+  var rt_array = [];
+  var rt = 0;
+  var avg_rt = -1;
+  //record choices participants made
+  for (var i = 0; i < experiment_data.length; i++) {
+    trial_count += 1
+    rt = experiment_data[i].rt
+    if (rt == -1) {
+      missed_count += 1
+    } else {
+      rt_array.push(rt)
+    }
+  }
+  //calculate average rt
+  if (rt_array.length !== 0) {
+    avg_rt = math.median(rt_array)
+  } else {
+    avg_rt = -1
+  }
+  credit_var = (avg_rt > 200)
+  jsPsych.data.addDataToLastTrial({"credit_var": credit_var})
+}
+
 var randomDraw = function(lst) {
   var index = Math.floor(Math.random() * (lst.length))
   return lst[index]
@@ -43,20 +73,10 @@ var getDecisionStim = function() {
 }
 
 var getDecisionText = function() {
-  return '<div class = centerbox><p class = "block-text">In the next block of trials you should choose whether you would rather eat the food shown on each trial OR the food shown below. You will select response from "Strong No", "No", "Neutral", "Yes" and "Strong Yes". "No" means that you would rather eat the food below, while "Yes" means you would rather eat the food displayed on that trial.</p>Press <strong>enter</strong> to begin.</p></div></div><div class = dd_referenceBox><img class = dd_Stim src = ' +
+  return '<div class = centerbox><p class = "block-text">In the next block of trials you should choose whether you would rather eat the food shown on each trial OR the food shown below. You will select response from "Strong No", "No", "Neutral", "Yes" and "Strong Yes". "No" means that you would rather eat the food below, while "Yes" means you would rather eat the food displayed on that trial.</p><p class = block-text>Take these decisions seriously. Imagine that at the end of the experiment you had to eat the food you chose in one random decision.</p><p class = block-text>Press <strong>enter</strong> to begin.</p></div></div><div class = dd_referenceBox><img class = dd_Stim src = ' +
     base_path + reference_stim + ' </img></div>'
 }
 
-function median(values) {
-  values.sort(function(a, b) {
-    return a - b;
-  });
-  var half = Math.floor(values.length / 2);
-  if (values.length % 2)
-    return values[half];
-  else
-    return (values[half - 1] + values[half]) / 2.0;
-}
 
 var setUpTest = function() {
   // Calculate avg scores
@@ -68,23 +88,31 @@ var setUpTest = function() {
   var key = ''
   for (var j = 0; j < stims.length; j++) {
     key = stims[j]
-    ratings.taste.push(stim_ratings[key].taste)
-    ratings.health.push(stim_ratings[key].health)
+    if (stim_ratings[key].taste !== 'NaN') {
+      ratings.taste.push(stim_ratings[key].taste)
+    }
+    if (stim_ratings[key].health !== 'NaN') {
+      ratings.health.push(stim_ratings[key].health)
+    }
   }
-  var median_taste = median(ratings.taste)
-  var median_health = median(ratings.health)
+  var median_taste = math.median(ratings.taste)
+  var median_health = math.median(ratings.health)
   var min_distance = 100
   for (var i = 0; i < stims.length; i++) {
     key = random_stims[i]
-    var taste_dist = Math.pow((stim_ratings[key].taste - median_taste), 2)
-    var health_dist = Math.pow((stim_ratings[key].health - median_health), 2)
-    var dist = health_dist + taste_dist
-    if (dist < min_distance) {
-      if (reference_stim !== '') {
-        decision_stims.push(reference_stim)
+    if (stim_ratings[key].taste !== 'NaN' && stim_ratings[key].health !== 'NaN') {
+      var taste_dist = Math.pow((stim_ratings[key].taste - median_taste), 2)
+      var health_dist = Math.pow((stim_ratings[key].health - median_health), 2)
+      var dist = health_dist + taste_dist
+      if (dist < min_distance) {
+        if (reference_stim !== '') {
+          decision_stims.push(reference_stim)
+        }
+        reference_stim = key
+        min_distance = dist
+      } else {
+        decision_stims.push(key)
       }
-      reference_stim = key
-      min_distance = dist
     } else {
       decision_stims.push(key)
     }
@@ -104,15 +132,12 @@ var run_attention_checks = false
 var attention_check_thresh = 0.65
 var sumInstructTime = 0 //ms
 var instructTimeThresh = 0 ///in seconds
+var credit_var = true
 
 // task specific variables
-var practice_len = 36
-var exp_len = 180
-var curr_trial = 0
-var choices = [74, 75, 76]
 var healthy_responses = ['Very_Unhealthy', 'Unhealthy', 'Neutral', 'Healthy', 'Very_Healthy']
 var tasty_responses = ['Very_Bad', 'Bad', 'Neutral', 'Good', 'Very_Good']
-var decision_responses = ['Strong_No', 'No', 'Neutral', 'Yes', 'Very_Yes']
+var decision_responses = ['Strong_No', 'No', 'Neutral', 'Yes', 'Strong_Yes']
 
 var health_response_area = '<div class = dd_response_div>' +
   '<button class = dd_response_button id = Very_Unhealthy>Very Unhealthy</button>' +
@@ -157,7 +182,7 @@ for (var i = 0; i < stims.length; i++) {
 //preload images
 jsPsych.pluginAPI.preloadImages(images)
 
-stims = stims.slice(0,4)
+var current_trial = 0
 var health_stims = jsPsych.randomization.shuffle(stims)
 var taste_stims = jsPsych.randomization.shuffle(stims)
 var decision_stims = []
@@ -208,7 +233,8 @@ var end_block = {
   },
   text: '<div class = centerbox><p class = "center-block-text">Thanks for completing this task!</p><p class = "center-block-text">Press <strong>enter</strong> to continue.</p></div>',
   cont_key: [13],
-  timing_post_trial: 0
+  timing_post_trial: 0,
+  on_finish: assessPerformance
 };
 
 var feedback_instruct_text =
@@ -267,7 +293,10 @@ var start_health_block = {
   },
   text: '<div class = centerbox><p class = "center-block-text">In the next block of trials, rate the healthiness of each food item without regard for its taste. Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
 var start_taste_block = {
@@ -278,7 +307,10 @@ var start_taste_block = {
   timing_response: 180000,
   text: '<div class = centerbox><p class = "center-block-text">In the next block of trials, rate the tastiness of each food item without regard for its healthiness. Press <strong>enter</strong> to begin.</p></div>',
   cont_key: [13],
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
 var setup_block = {
@@ -298,7 +330,10 @@ var start_decision_block = {
   },
   text: getDecisionText,
   cont_key: [13],
-  timing_post_trial: 500
+  timing_post_trial: 500,
+  on_finish: function() {
+  	current_trial = 0
+  }
 };
 
 
@@ -323,8 +358,8 @@ var health_block = {
   stimulus: getHealthStim,
   button_class: 'dd_response_button',
   data: {
-    trial_id: 'stim-health_rating',
-    exp_stage: 'test'
+    trial_id: 'stim',
+    exp_stage: 'health_rating'
   },
   timing_stim: 4000,
   timing_response: 4000,
@@ -332,10 +367,15 @@ var health_block = {
   timing_post_trial: 500,
   on_finish: function(data) {
     var numeric_rating = healthy_responses.indexOf(data.mouse_click) - 2
+    if (data.mouse_click === -1) {
+      numeric_rating = 'NaN'
+    }
     jsPsych.data.addDataToLastTrial({
       'stim': curr_stim.slice(0, -4),
-      'coded_response': numeric_rating
+      'coded_response': numeric_rating,
+      'trial_num': current_trial
     })
+    current_trial += 1
     stim_ratings[curr_stim].health = numeric_rating
   }
 }
@@ -346,8 +386,8 @@ var taste_block = {
   stimulus: getTasteStim,
   button_class: 'dd_response_button',
   data: {
-    trial_id: 'stim-taste_rating',
-    exp_stage: 'test'
+    trial_id: 'stim',
+    exp_stage: 'taste_rating'
   },
   timing_stim: 4000,
   timing_response: 4000,
@@ -355,10 +395,15 @@ var taste_block = {
   timing_post_trial: 500,
   on_finish: function(data) {
     var numeric_rating = tasty_responses.indexOf(data.mouse_click) - 2
+    if (data.mouse_click === -1) {
+      numeric_rating = 'NaN'
+    }
     jsPsych.data.addDataToLastTrial({
       'stim': curr_stim.slice(0, -4),
-      'coded_response': numeric_rating
+      'coded_response': numeric_rating,
+      'trial_num': current_trial
     })
+    current_trial += 1
     stim_ratings[curr_stim].taste = numeric_rating
   }
 }
@@ -368,8 +413,8 @@ var decision_block = {
   stimulus: getDecisionStim,
   button_class: 'dd_response_button',
   data: {
-    trial_id: 'stim-decision',
-    exp_stage: 'test'
+    trial_id: 'stim',
+    exp_stage: 'decision'
   },
   timing_stim: 4000,
   timing_response: 4000,
@@ -384,8 +429,10 @@ var decision_block = {
       'reference': reference_stim.slice(0, -4),
       'stim_rating': stim_rating,
       'reference_rating': reference_rating,
-      'coded_response': decision_rating
+      'coded_response': decision_rating,
+      'trial_num': current_trial
     })
+    current_trial += 1
   }
 }
 

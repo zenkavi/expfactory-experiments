@@ -105,9 +105,7 @@ var get_current_trial = function() {
 }
 
 var initialize_FB_matrix = function() {
-	return [Math.random() * 0.5 + 0.25, Math.random() * 0.5 + 0.25, Math.random() * 0.5 + 0.025, Math
-		.random() * 0.5 + 0.25
-	]
+	return [Math.random() * 0.5 + 0.25, Math.random() * 0.5 + 0.25, Math.random() * 0.5 + 0.25, Math.random() * 0.5 + 0.25]
 }
 
 //Change phase from practice to test
@@ -635,7 +633,6 @@ var first_stage_selected = {
 	choices: 'none',
 	is_html: true,
 	timing_post_trial: 0,
-	timing_stim: 1000,
 	timing_response: 1000,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
@@ -676,7 +673,6 @@ var second_stage_selected = {
 	choices: 'none',
 	is_html: true,
 	timing_post_trial: 0,
-	timing_stim: 1000,
 	timing_response: 1000,
 	on_finish: function() {
 		jsPsych.data.addDataToLastTrial({
@@ -693,7 +689,6 @@ var FB_stage = {
 	stimulus: get_feedback,
 	is_html: true,
 	choices: 'none',
-	timing_stim: 500,
 	timing_response: 500,
 	continue_after_response: false,
 	timing_post_trial: 0,

@@ -130,7 +130,7 @@ var getFeedback = function() {
     FB = 0
   }
   jsPsych.data.addDataToLastTrial({
-    FB: FB
+    'feedback': FB
   })
   return image + '<div class = shift_feedback_box><p class = center-text>' + feedback_text +
     '</p></div>'
@@ -398,7 +398,7 @@ var practice_stim_block = {
       exp_stage: "practice",
       stims: JSON.stringify(stims),
       choice_stim: choice_stim,
-      choice_position: position_array[choice]
+      choice_position: position_array[choice] || -1
     })
   }
 };
@@ -424,7 +424,7 @@ var stim_block = {
       exp_stage: "test",
       stims: JSON.stringify(stims),
       choice_stim: choice_stim,
-      choice_position: position_array[choice]
+      choice_position: position_array[choice] || -1
     })
   }
 };
@@ -449,7 +449,7 @@ var practice_feedback_block = {
     jsPsych.data.addDataToLastTrial({
       trial_id: "feedback",
       exp_stage: "practice",
-      FB: FB
+      'feedback': FB
     })
     switch_count += 1
     if (switch_count == switch_bound) {
@@ -501,7 +501,7 @@ var feedback_block = {
     jsPsych.data.addDataToLastTrial({
       trial_id: "feedback",
       exp_stage: "test",
-      FB: FB
+      'feedback': FB
     })
     switch_count += 1
     if (switch_count == switch_bound) {
